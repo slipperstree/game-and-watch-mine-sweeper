@@ -1,5 +1,5 @@
-#ifndef __EMB_SNAKE_DISPLAY_H_
-#define __EMB_SNAKE_DISPLAY_H_
+#ifndef __EMB_MINE_DISPLAY_H_
+#define __EMB_MINE_DISPLAY_H_
 
 #include "common.h"
 #include "color.h"

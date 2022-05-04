@@ -1,5 +1,5 @@
-#ifndef __EMB_SNAKE_SAVE_DATA_H_
-#define __EMB_SNAKE_SAVE_DATA_H_
+#ifndef __EMB_MINE_SAVE_DATA_H_
+#define __EMB_MINE_SAVE_DATA_H_
 
 #include "embSnakeDevice.h"
 

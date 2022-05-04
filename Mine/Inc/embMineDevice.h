@@ -6,8 +6,8 @@
  * Func  : 设备驱动模块头文件，用于适配不同的设备
 ***************************************************/
 
-#ifndef __EMB_SNAKE_DEVICE_H_
-#define __EMB_SNAKE_DEVICE_H_
+#ifndef __EMB_MINE_DEVICE_H_
+#define __EMB_MINE_DEVICE_H_
 
 #include "common.h"
 

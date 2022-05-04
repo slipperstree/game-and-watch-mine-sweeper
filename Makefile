@@ -70,7 +70,7 @@ Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sai.c \
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sai_ex.c \
 Mine/Src/embMine.c \
 Mine/Src/myMathUtil.c \
-#Mine/Src/common.c \
+Mine/Src/common.c \
 #Mine/Src/font.c \
 #Mine/Src/key.c \
 #Mine/Src/saveData.c \

@@ -1,7 +1,7 @@
 // 板级支持头文件
 
-#ifndef __EMB_SNAKE_BORAD_SUPPORT_H_
-#define __EMB_SNAKE_BORAD_SUPPORT_H_
+#ifndef __EMB_MINE_BORAD_SUPPORT_H_
+#define __EMB_MINE_BORAD_SUPPORT_H_
 
 #include "common.h"
 
