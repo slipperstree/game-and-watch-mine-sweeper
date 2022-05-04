@@ -39,9 +39,6 @@ u16 ttFlagQuick = 0;
 u16 ttGameTime = 0;
 
 // 游戏难度
-#define GAME_LVL_1   10
-#define GAME_LVL_2   16
-#define GAME_LVL_3   22
 u8 gameLevel = 0;
 
 // 游戏时间
@@ -71,7 +68,7 @@ extern u8 buff[128];
 // =====================================
 void CTL_run(){
 	u16 flashSpeed=0;
-    u16 flashSpeedQuick=100;
+    u16 flashSpeedQuick=10;
 
     KEY_keyscan();
 
@@ -79,6 +76,8 @@ void CTL_run(){
     // TODO:G&W? 本来是在定时器中断里面做的，GBA定时器中断有吗？
     ttWalk++;
     ttFlag++;
+    ttFlagQuick++;
+    ttGameTime++;
     
     if (nowMode == MODE_WELCOME_DEMO)
     {
@@ -100,7 +99,7 @@ void CTL_run(){
     }
 
     //TODO: GW 1sec ?
-    if (ttGameTime >= 1000) {
+    if (ttGameTime >= 100) {
         ttGameTime = 0;
         if (isPlaying)
         {
@@ -247,23 +246,24 @@ void doBtnCommon(u8 btnNo, u8 event_id){
             // 继续判断是哪个按键
             switch (btnNo)
             {
-            case KEY_A:
+            case KEY_UP:
                 // HOME-简单
                 gameLevel = GAME_LVL_1;
                 break;
-            case KEY_B:
+            case KEY_DOWN:
                 // HOME-普通
                 gameLevel = GAME_LVL_2;
                 break;
-            case KEY_TIME:
+            case KEY_RIGHT:
                 // HOME-困难
                 gameLevel = GAME_LVL_3;
                 break;
             default:
+                return;
                 break;
             }
 
-            // 任意键 从标题画面 进入游戏画面
+            // 从标题画面 进入游戏画面
             nowMode = MODE_GAME;
 
             // 关屏
@@ -300,10 +300,43 @@ void doBtnCommon(u8 btnNo, u8 event_id){
     case MODE_GAME:
         switch (event_id)
         {
+        case KEY_EVENT_KEEPING_PRESS:
+            switch (btnNo)
+            {
+            case KEY_UP:
+                if (gDevCurPosY==0) {
+                    gDevCurPosY = MINE_SIZE_Y-1;
+                } else {
+                    gDevCurPosY--;
+                }
+                break;
+            case KEY_DOWN:
+                if (gDevCurPosY==(MINE_SIZE_Y-1)) {
+                    gDevCurPosY = 0;
+                } else {
+                    gDevCurPosY++;
+                }
+                break;
+            case KEY_LEFT:
+                if (gDevCurPosX==0) {
+                    gDevCurPosX = MINE_SIZE_X-1;
+                } else {
+                    gDevCurPosX--;
+                }
+                break;
+            case KEY_RIGHT:
+                if (gDevCurPosX==(MINE_SIZE_X-1)) {
+                    gDevCurPosX = 0;
+                } else {
+                    gDevCurPosX++;
+                }
+                break;
+            default:
+                break;
+            }
+            break;
         // 按键按下
         case KEY_EVENT_DOWN:
-            // LOG("KEY_EVENT_DOWN in MODE_GAME\r\n");
-            // sprintf(buff, "btn=%b2d nowModeA=%b2d\r\n", btnNo, nowMode);LOG(buff);
 
             switch (btnNo)
             {
@@ -335,11 +368,6 @@ void doBtnCommon(u8 btnNo, u8 event_id){
                     gDevCurPosX++;
                 }
                 break;
-            case KEY_GAME:
-                // Game-按键1=锁定光标
-                lockCurFlg = 1;
-                DISP_drawLock();
-                break;
             case KEY_B:
                 // Game-按键2=插旗
                 devPlaySound(SOUND_FLAG);
@@ -349,19 +377,6 @@ void doBtnCommon(u8 btnNo, u8 event_id){
                 // Game-按键3=点击
                 devPlaySound(SOUND_CLICK);
                 MINE_click(gDevCurPosX, gDevCurPosY);
-                break;
-            default:
-                break;
-            }
-            break;
-        // 按键抬起
-        case KEY_EVENT_UP:
-            switch (btnNo)
-            {
-            case KEY_LEFT:
-                // Game-按键1=释放光标
-                lockCurFlg = 0;
-                DISP_drawUnLock();
                 break;
             default:
                 break;

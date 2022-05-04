@@ -37,19 +37,14 @@ typedef struct
 // 汉字字体(只包含需要的汉字) ------------------
 //   注意，对应的汉字字体必须要外链一个英文字体，
 //   所以需要同时放开外链的英文字体，一般是同Size的字体
-//#define SUPPORT_HZ_SIZE_12
-//#define SUPPORT_HZ_SIZE_16
 #define SUPPORT_HZ_SIZE_32
 
 // 标题用字体 --------------------------------
-//#define SUPPORT_HZ_TITLE_32
 #define SUPPORT_HZ_TITLE_64
 
 // 位图用字体 --------------------------------
-// 学电LOGO两个字
-//#define SUPPORT_HZ_XD_LOGO_20
-//#define SUPPORT_HZ_XD_LOGO_32
-#define SUPPORT_HZ_XD_LOGO_40
+// S&W LOGO
+#define SUPPORT_LOGO_70
 
 // demo中央显示的演示模式4个字用
 #define SUPPORT_HZ_DEMO_MODE_24
@@ -77,54 +72,19 @@ typedef struct
   extern Font_Type FONT20;
 #endif
 #ifdef SUPPORT_CHAR_SIZE_32
-  extern Font_Type FONT32;
+  extern Font_Type FONT_ASC32;
 #endif
 
 // 汉字字体(只包含需要的汉字) ------------------
-#ifdef SUPPORT_HZ_SIZE_12
-  extern Font_Type FONTHZ12;
-#endif
-#ifdef SUPPORT_HZ_SIZE_16
-  extern Font_Type FONTHZ16;
-#endif
 #ifdef SUPPORT_HZ_SIZE_32
   extern Font_Type FONTHZ32;
 #endif
 
+extern Font_Type FONT_ICON_FLAG;
+
 // 标题用字体 --------------------------------
-#ifdef SUPPORT_HZ_TITLE_32
-  extern Font_Type FONTHZ_TITLE32;
-#endif
 #ifdef SUPPORT_HZ_TITLE_64
   extern Font_Type FONTHZ_TITLE64;
-#endif
-
-// 位图用字体 --------------------------------
-// 学电LOGO两个字
-#ifdef SUPPORT_HZ_XD_LOGO_20
-  extern Font_Type FONTHZ_XD_LOGO20;
-  #ifndef FONT_HZ_XD_LOGO
-  #define FONT_HZ_XD_LOGO 0
-  #endif
-#endif
-#ifdef SUPPORT_HZ_XD_LOGO_32
-  extern Font_Type FONTHZ_XD_LOGO32;
-  #ifndef FONT_HZ_XD_LOGO
-  #define FONT_HZ_XD_LOGO 0
-  #endif
-#endif
-#ifdef SUPPORT_HZ_XD_LOGO_40
-  extern Font_Type FONTHZ_XD_LOGO40;
-  #ifndef FONT_HZ_XD_LOGO
-  #define FONT_HZ_XD_LOGO 0
-  #endif
-#endif
-#ifdef SUPPORT_HZ_DEMO_MODE_24
-  extern Font_Type FONTHZ_DEMO_MOEDE24;
-  #define FONT_HZ_DEMO_MODE_YAN  0
-  #define FONT_HZ_DEMO_MODE_SHI1 1
-  #define FONT_HZ_DEMO_MODE_MO   2
-  #define FONT_HZ_DEMO_MODE_SHI2 3
 #endif
 
 extern Font_Type FONT_DIGIT23;

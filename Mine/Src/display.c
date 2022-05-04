@@ -7,30 +7,47 @@
 
 // 各种字符串定义，可自由修改
 // 屏幕较小的话要改短一些,大屏也不要太长,预留的缓冲区只有128字节,超出的话会发生未知问题
-u8* STR_PRESS_ANY_KEY             = (u8*)"  按任意键继续..";
-u8* STR_DEMO_MENU                 = (u8*)"壹速度 貳声音 叁返回";  //壹貳叁代表按钮①②③图标 //Demo未使用
-u8* STR_LEVEL_SEL                 = (u8*)"壹简单 貳普通 叁困难";
+u8* STR_PRESS_ANY_KEY             = (u8*)"Press any btn";
+u8* STR_LEVEL_SEL                 = (u8*)"Up:Easy Down:Normal Right:Hard";
 
-u8* STR_GAME_MENU1_LOCK           = (u8*)"壹锁";
-u8* STR_GAME_MENU1_UNLOCK         = (u8*)"壹解";
-u8* STR_GAME_MENU2                = (u8*)"貳旗";
-u8* STR_GAME_MENU3                = (u8*)"叁挖";
+u8* STR_GAME_TOP_INFO             = (u8*)"B:Flag A:Dig";
 
-u8* STR_GAMEOVER_GAMEOVER         = (u8*)"游戏结束";
-u8* STR_GAMEOVER_NEWRECORD        = (u8*)"恭喜,刷新记录!";
-u8* STR_GAMEOVER_HSCORE           = (u8*)"记录:";
-u8* STR_GAMEOVER_SCORE            = (u8*)"用时:";
+// u8* STR_GAME_MENU1_LOCK           = (u8*)"G:L";
+// u8* STR_GAME_MENU1_UNLOCK         = (u8*)"G:U";
+// u8* STR_GAME_MENU2                = (u8*)"B:Flag";
+// u8* STR_GAME_MENU3                = (u8*)"A:Dig";
 
+u8* STR_GAMEOVER_GAMEOVER         = (u8*)"  Game Over  ";
+u8* STR_GAMEOVER_NEWRECORD        = (u8*)"New Record";
+u8* STR_GAMEOVER_HSCORE           = (u8*)"Record ";
+u8* STR_GAMEOVER_SCORE            = (u8*)"Time   ";
+u8* STR_GAMEOVER_MORE             = (u8*)"Press PAUSE/SET for more info.";
 u8* STR_GAMEOVER_INFO_EXIT        = (u8*)"EXIT : Press any button";
 
+// 底部信息栏字体
 #define FONT_BOTTOM_INFO          FONT_ASC12
+// 菜单字体
+#define FONT_MENU_INFO            FONT_ASC12
+// 其他文字的字体，比如GameOver，按任意键继续
+#define FONT_OTHER_TEXT           FONT_ASC32
+
+// Gameover page
+#define  TITLE_Y         15
+#define  SCROE_Y         80
+#define HSCROE_Y        120
 
 // 右侧信息栏元素位置
 #define FRAME_RIGHT_INFO_WIDTH  75
-#define TIME_X          250
-#define TIME_Y           60
-#define FLAG_X          248
-#define FLAG_Y           10
+#define TIME_X           18
+#define TIME_Y            3
+#define TIME_BG_X  TIME_X-8
+#define TIME_BG_W        73
+#define FLAG_X          260
+#define FLAG_Y            3
+#define FLAG_BG_X  FLAG_X-25
+#define FLAG_BG_W        73
+#define TOP_INFO_Y       6
+
 #define MENU_X          250
 #define MENU_LOCK_Y     130
 #define MENU_FLAG_Y    165
@@ -675,52 +692,13 @@ void DISP_drawWelcome(u8 isStartUp){
 
     devScreenON();
 
-    // 学电LOGO
-    logoX = (SCREEN_W - FONTHZ_XD_LOGO40.fontWidth) / 2;
-    logoY = titleY + FONTHZ_TITLE64.fontHeight + FONTHZ_XD_LOGO40.fontHeight / 2;
-//TODO:Fortest
-//isStartUp = 0;
-    if (isStartUp)
-    {
-        My_delay_ms(500);
-        // 学电LOGO缓缓出现的动画效果
-        while(1){
-            r+=5;
-            if (r>=256) break;
-            showChar(logoX, logoY, FONT_HZ_XD_LOGO, &FONTHZ_XD_LOGO40, RGB888toRGB565(r, 0, 0), COLOR_BG);
-        }
-        // 出现后等待一会儿
-        My_delay_ms(300);
-    } else {
-        // 非上电画面，快速显示
-        // 学电LOGO缓缓出现的动画效果
-        while(r<255){
-            r+=30;
-            if (r>=256) r = 255;
-            showChar(logoX, logoY, FONT_HZ_XD_LOGO, &FONTHZ_XD_LOGO40, RGB888toRGB565(r, 0, 0), COLOR_BG);
-        }
-        // 出现后等待一会儿
-        //My_delay_ms(500);
-    }
-
     // 难度选择
-    showStringCenter(logoY + FONTHZ_XD_LOGO40.fontHeight + FONTHZ_XD_LOGO40.fontHeight / 2, STR_LEVEL_SEL, &FONTHZ32, 0);
+    showStringCenter(SCREEN_H - FONT_BOTTOM_INFO.fontHeight - 2, STR_LEVEL_SEL, &FONT_BOTTOM_INFO, 0);
 }
 
 // ##### 首页 定期被调用
 void DISP_flashWelcome(u8 flashOnOff){
-    u16 logoX, logoY;
-
-    u8 tmp=0;
-
-    #if ISDEBUG
-    LOG("  DISP_flashWelcome 1: call showStringCenter(str=%s pStr=%ld)\r\n", STR_PRESS_ANY_KEY, &STR_PRESS_ANY_KEY);
-    #endif
     
-    // 学电LOGO变幻颜色
-    logoX = (SCREEN_W - FONTHZ_XD_LOGO40.fontWidth) / 2;
-    logoY = SCREEN_H/6 + FONTHZ_TITLE64.fontHeight + FONTHZ_XD_LOGO40.fontHeight / 2;
-    showChar(logoX, logoY, FONT_HZ_XD_LOGO, &FONTHZ_XD_LOGO40, randRGB565(), COLOR_BG);
 }
 
 // ##### Demo页 初始化时被调用一次
@@ -758,22 +736,22 @@ void DISP_drawGame(u8 soundOnOff, u8 flagCnt){
     // 误以为1是正确的值调整后面的位置第一次是对的，第二次就全错了。
     //topInfoY = frameThickness + 2;
 
-    // 版权
-    showString(SCREEN_W - FRAME_RIGHT_INFO_WIDTH+3, 100, "Chen.L", &FONT20, COLOR_FO, COLOR_BG);
+    // if (flagCnt == GAME_LVL_1) showString(SCREEN_W - FRAME_RIGHT_INFO_WIDTH+3, 100, "Easy", &FONT20, COLOR_FO, COLOR_BG);
+    // if (flagCnt == GAME_LVL_2) showString(SCREEN_W - FRAME_RIGHT_INFO_WIDTH+3, 100, "Normal", &FONT20, COLOR_FO, COLOR_BG);
+    // if (flagCnt == GAME_LVL_3) showString(SCREEN_W - FRAME_RIGHT_INFO_WIDTH+3, 100, "Hard", &FONT20, COLOR_FO, COLOR_BG);
 
     // 初始时间
     DISP_updateTime(0);
 
     // 初始旗子数
     // 画旗子
-    devFillRectange(SCREEN_W - FRAME_RIGHT_INFO_WIDTH - frameThickness, frameThickness, FRAME_RIGHT_INFO_WIDTH, 45, COLOR_FO );
-    showChar(FLAG_X, FLAG_Y, "旗", &FONTHZ32, COLOR_FO, COLOR_BG);
+    //devFillRectange(SCREEN_W - FRAME_RIGHT_INFO_WIDTH - frameThickness, frameThickness, FRAME_RIGHT_INFO_WIDTH, 45, COLOR_FO );
+    //showChar(FLAG_X, FLAG_Y, 0, &FONT_ICON_FLAG, COLOR_FO, COLOR_BG);
     DISP_updateFlagCnt(flagCnt);
 
     // 菜单
-    DISP_drawUnLock();
     DISP_drawSound(1);
-    showString(MENU_X, MENU_CLICK_Y, STR_GAME_MENU3, &FONTHZ32, COLOR_BG, COLOR_FO);
+    //showString(MENU_X, MENU_CLICK_Y, STR_GAME_MENU3, &FONT_MENU_INFO, COLOR_BG, COLOR_FO);
 
     // 绘制声音状态
     DISP_drawSound(soundOnOff);
@@ -799,8 +777,8 @@ void DISP_updateTime(u16 sec){
 void DISP_updateFlagCnt(u8 flagCnt){
 
     // 更新旗子个数
-    sprintf(buff, "%b02d", flagCnt);
-    showString(FLAG_X + 30, FLAG_Y + 5, buff, &FONT32, COLOR_FO, COLOR_BG);
+    sprintf(buff, "%03d", flagCnt);
+    showString(FLAG_X, FLAG_Y, buff, &FONT_DIGIT23, COLOR_BG, COLOR_RED);
 }
 
 // ##### BeforeGameOver页 定期被调用
@@ -808,11 +786,9 @@ void DISP_flashBeforeGameOver(u8 flashOnOff, u8 isWin){
     // 闪烁文字 按任意键继续
     if (flashOnOff)
     {
-        showString(MENU_X, MENU_LOCK_Y, "按任", &FONTHZ32, COLOR_BG, COLOR_FO);
-        showString(MENU_X, MENU_FLAG_Y, "意键", &FONTHZ32, COLOR_BG, COLOR_FO);
-        showString(MENU_X, MENU_CLICK_Y, "继续", &FONTHZ32, COLOR_BG, COLOR_FO);
+        showStringCenterColor(TOP_INFO_Y, STR_GAMEOVER_GAMEOVER, &FONT_ASC16, COLOR_FRAME, COLOR_BG, 0);
     } else {
-        devFillRectange(MENU_X, MENU_LOCK_Y, FONTHZ32.fontWidth * 2, MENU_CLICK_Y - MENU_LOCK_Y + FONTHZ32.fontHeight, COLOR_BG);
+        showStringCenterColor(TOP_INFO_Y, STR_GAMEOVER_GAMEOVER, &FONT_ASC16, COLOR_FRAME, COLOR_BG, 1);
     }
 }
 
@@ -821,23 +797,14 @@ void DISP_drawGameOver(u8 isWin, u8* levelStr, u16 score, u16 hiScore){
     u8 buff1[32];
     clearScreen();
 
-    #define  TITLE_Y         35
-    #define  SCROE_Y         80
-    #define HSCROE_Y        120
-
-    //showStringCenter(5, "__________", &FONT32, 0);
+    //showStringCenter(5, "__________", &FONT_OTHER_TEXT, 0);
 
     // 标题，如果超过最高分，显示 刷新记录 否则 显示游戏结束
-    devFillRectange(0, TITLE_Y, SCREEN_W, FONTHZ32.fontHeight, COLOR_FO);
     if (isWin && score < hiScore)
     {
-        sprintf(buff1, "%s-%s", STR_GAMEOVER_NEWRECORD, levelStr);
-        showStringCenterMutiColor(TITLE_Y, buff1, &FONTHZ32, 0, COLOR_FO, 
-            7, 
-            COLOR_RED, COLOR_RED, COLOR_REDLT, COLOR_REDLT, COLOR_ORANGE, COLOR_ORANGE, COLOR_YELLOW);
+        showStringCenter(TITLE_Y, STR_GAMEOVER_NEWRECORD, &FONT_OTHER_TEXT, 0);
     } else {
-        sprintf(buff1, "%s-%s", STR_GAMEOVER_GAMEOVER, levelStr);
-        showStringCenterColor(TITLE_Y, buff1, &FONTHZ32, COLOR_FO, COLOR_BLACK, 0);
+        showStringCenter(TITLE_Y, STR_GAMEOVER_GAMEOVER, &FONT_OTHER_TEXT, 0);
     }
     
 
@@ -849,13 +816,16 @@ void DISP_drawGameOver(u8 isWin, u8* levelStr, u16 score, u16 hiScore){
         // 没有得分
         sprintf(buff1, "%s --:--", STR_GAMEOVER_SCORE);
     }
-    showStringCenter(SCROE_Y, buff1, &FONTHZ32, 0);
+    showStringCenter(SCROE_Y, buff1, &FONT_OTHER_TEXT, 0);
     
     // 记录
     sprintf(buff1, "%s %02d:%02d", STR_GAMEOVER_HSCORE, hiScore/60, hiScore%60);
-    showStringCenter(HSCROE_Y, buff1, &FONTHZ32, 0);
+    showStringCenter(HSCROE_Y, buff1, &FONT_OTHER_TEXT, 0);
 
-    showStringCenter(150, "__________", &FONT32, 0);
+    //showStringCenter(150, "__________", &FONT_OTHER_TEXT, 0);
+
+    // more info
+    showStringCenter(SCREEN_H - FONT_BOTTOM_INFO.fontHeight - 2, STR_GAMEOVER_MORE, &FONT_BOTTOM_INFO, 0);
 }
 
 // ##### GameOver页 定期被调用
@@ -865,11 +835,11 @@ void DISP_flashGameOver(u8 flashOnOff, u8 isNewRecord, u8* levelStr){
     {
         // // 刷新记录动态效果
         // sprintf(buff, "%s-%s", STR_GAMEOVER_NEWRECORD, levelStr);
-        // showStringCenterColor(35, buff, &FONTHZ32, COLOR_FO, randRGB565DK(), 0);
+        // showStringCenterColor(35, buff, &FONT_OTHER_TEXT, COLOR_FO, randRGB565DK(), 0);
     }
 
     // 闪烁文字 按任意键继续...
-    showStringCenter(190, STR_PRESS_ANY_KEY, &FONTHZ32, flashOnOff);
+    showStringCenter(190, STR_PRESS_ANY_KEY, &FONT_OTHER_TEXT, flashOnOff);
 }
 
 // ##### 游戏介绍页
@@ -892,27 +862,41 @@ void DISP_drawFrame() {
     u16 barTopY, barRightX;
 
     // 边框厚度
-    frameThickness = 5;
+    frameThickness = 2;
+
+    // 先填充整个屏幕
+    devFillRectange(0, 0, SCREEN_W, SCREEN_H, COLOR_FRAME);
+
+    // Time area
+    devFillRectange(TIME_BG_X, TIME_Y, TIME_BG_W, FONT_DIGIT23.fontHeight, COLOR_BG);
+
+    // Flag area
+    devFillRectange(FLAG_BG_X, FLAG_Y, FLAG_BG_W, FONT_DIGIT23.fontHeight, COLOR_BG);
+
+    // Top info
+    showStringCenterColor(TOP_INFO_Y, STR_GAME_TOP_INFO, &FONT_ASC16, COLOR_FRAME, COLOR_BG, 0);
+
+
 
     // 游戏区域右方竖栏位置Y = 屏幕宽 - 右方边框高 - 右方信息栏高 - 右方竖栏高(也是边框厚度) 
     // 加1的目的是为了留出右侧的一像素的空间用来绘制选中状态的外框
-    barRightX = SCREEN_W - frameThickness - FRAME_RIGHT_INFO_WIDTH - frameThickness + 1;
+    // barRightX = SCREEN_W - frameThickness - FRAME_RIGHT_INFO_WIDTH - frameThickness + 1;
 
     // 开始绘制(实心矩形拼接)
-    devFillRectange(0, 0, SCREEN_W, frameThickness, COLOR_FRAME);                           // 顶
-    devFillRectange(0, 0, frameThickness, SCREEN_H, COLOR_FRAME);                           // 左
-    devFillRectange(SCREEN_W - frameThickness, 0, frameThickness, SCREEN_H, COLOR_FRAME);   // 右
-    devFillRectange(barRightX, 0, frameThickness, SCREEN_H, COLOR_FRAME);                   // 右竖栏
-    devFillRectange(SCREEN_W - frameThickness - FRAME_RIGHT_INFO_WIDTH, MENU_LOCK_Y - 35, FRAME_RIGHT_INFO_WIDTH, 30, COLOR_FRAME);    // 右横栏
-    devFillRectange(0, SCREEN_H - frameThickness+1, SCREEN_W, frameThickness-1, COLOR_FRAME);   // 底
-
-    // 最后绘制雷区 最右侧 和 最底部 缺少的一个像素宽的边框线
-    devDrawLine(frameThickness, SCREEN_H-frameThickness, barRightX - 1, SCREEN_H-frameThickness, 1, COLOR_MINE_BLOCK_LINE);
-    devDrawLine(barRightX - 1, frameThickness, barRightX - 1, SCREEN_H-frameThickness, 1, COLOR_MINE_BLOCK_LINE);
+    // devFillRectange(0, 0, SCREEN_W, frameThickness, COLOR_FRAME);                           // 顶
+    // devFillRectange(0, 0, frameThickness, SCREEN_H, COLOR_FRAME);                           // 左
+    // devFillRectange(SCREEN_W - frameThickness, 0, frameThickness, SCREEN_H, COLOR_FRAME);   // 右
+    // devFillRectange(barRightX, 0, frameThickness, SCREEN_H, COLOR_FRAME);                   // 右竖栏
+    // devFillRectange(SCREEN_W - frameThickness - FRAME_RIGHT_INFO_WIDTH, MENU_LOCK_Y - 35, FRAME_RIGHT_INFO_WIDTH, 30, COLOR_FRAME);    // 右横栏
+    // devFillRectange(0, SCREEN_H - frameThickness+1, SCREEN_W, frameThickness-1, COLOR_FRAME);   // 底
 
     // 游戏区域Y偏移
-    GAME_AREA_Y_OFFSET = frameThickness;
-    GAME_AREA_X_OFFSET = frameThickness;
+    GAME_AREA_Y_OFFSET = SCREEN_H - MINE_SIZE_Y * FONT_IMG_2BIT_BLOCK_BG23.fontHeight - frameThickness - 1;
+    GAME_AREA_X_OFFSET = (SCREEN_W - MINE_SIZE_X * FONT_IMG_2BIT_BLOCK_BG23.fontWidth) / 2;
+
+    // 最后绘制雷区 最右侧 和 最底部 缺少的一个像素宽的边框线
+    devDrawLine(SCREEN_W - GAME_AREA_X_OFFSET - 1, GAME_AREA_Y_OFFSET, SCREEN_W - GAME_AREA_X_OFFSET - 1, GAME_AREA_Y_OFFSET + MINE_SIZE_Y * FONT_IMG_2BIT_BLOCK_BG23.fontHeight, 1, COLOR_MINE_BLOCK_LINE);
+    devDrawLine(GAME_AREA_X_OFFSET, GAME_AREA_Y_OFFSET + MINE_SIZE_Y * FONT_IMG_2BIT_BLOCK_BG23.fontHeight, SCREEN_W - GAME_AREA_X_OFFSET, GAME_AREA_Y_OFFSET + MINE_SIZE_Y * FONT_IMG_2BIT_BLOCK_BG23.fontHeight, 1, COLOR_MINE_BLOCK_LINE);
 }
 
 // 绘制光标
@@ -949,38 +933,17 @@ void DISP_showCusor(u8 x, u8 y){
 
 // 声音和静音状态
 void DISP_drawSound(u8 soundOnOff) {
-    if (soundOnOff)
-    {
-        showString(MENU_X, MENU_FLAG_Y, STR_GAME_MENU2, &FONTHZ32, COLOR_BG, COLOR_FO);
-    } else {
-        // 绘制静音
-        devDrawLine(MENU_X+27, MENU_FLAG_Y+2, MENU_X+51, MENU_FLAG_Y+28, 3, COLOR_RED);
-    }
+    // if (soundOnOff)
+    // {
+    //     showString(MENU_X, MENU_FLAG_Y, STR_GAME_MENU2, &FONT_MENU_INFO, COLOR_BG, COLOR_FO);
+    // } else {
+    //     // 绘制静音
+    //     devDrawLine(MENU_X+27, MENU_FLAG_Y+2, MENU_X+51, MENU_FLAG_Y+28, 3, COLOR_RED);
+    // }
     
-}
-
-void DISP_drawLock() {
-    showString(MENU_X, MENU_LOCK_Y, STR_GAME_MENU1_LOCK, &FONTHZ32, COLOR_BG, COLOR_RED);
-}
-
-void DISP_drawUnLock() {
-    showString(MENU_X, MENU_LOCK_Y, STR_GAME_MENU1_UNLOCK, &FONTHZ32, COLOR_BG, COLOR_FO);
 }
 
 // 初始化
 void DISP_init(void){
-    // u32 clock;
-    // u16 clockH;
-    // u16 clockL;
-
     devDisplayInit(COLOR_BG);
-
-    // 测试打印出系统时钟
-    // clock=Get_SysClk_FRE();
-    // clockH = clock >> 16;
-    // clockL = clock & 0xFFFF;
-    // sprintf(buff, "H:%u  L:%u", clockH, clockL);
-    // showString(0,0,buff,&FONTHZ32,COLOR_BLACK, COLOR_WHITE);
-    // while (1);
-    
 }

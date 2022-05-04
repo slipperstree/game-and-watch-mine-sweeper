@@ -11,6 +11,10 @@
 
 #include "common.h"
 
+#define GAME_LVL_1   10
+#define GAME_LVL_2   16
+#define GAME_LVL_3   22
+
 // *******************************************************************************************************
 // * 按键配置，根据需要修改以下宏定义
 // *******************************************************************************************************
@@ -59,9 +63,9 @@
         // 判断双击用，两次单击之间不能超过多久（如果判断成双击则单击无效）(USE_KEY_DOWN_UP 且 NOT_USE_DBCLICK 未定义时才会起作用)
         #define TICK_WAIT_DBCLICK_START     0x0050
         //判断按住不放用，按下以后需要持续多久
-        #define TICK_KEEPDOWN               0xA000    
+        #define TICK_KEEPDOWN               0x0010    
         //按住不放的时候，每隔多久自动触发一次按住不放的事件
-        #define TICK_KEEPDOWN_NEXT          0x1000    
+        #define TICK_KEEPDOWN_NEXT          0x0009    
 
     // ******* 4-根据需要修改按键消抖动等待时间 *******
         #define XIAO_DOU 1
