@@ -29,7 +29,7 @@
 
 // for mine game
 #include "common.h"
-//TODO: GW #include "control.h"
+#include "control.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -147,7 +147,7 @@ int main(void)
   //HAL_SAI_Transmit_DMA(&hsai_BlockA1, audiobuffer, sizeof(audiobuffer) / sizeof(audiobuffer[0]));
 
   my_seed_rand(14);
-	//TODO: GW CTL_init();
+	CTL_init();
 
   while (1)
   {
@@ -155,7 +155,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-    //TODO: GW CTL_run();
+    CTL_run();
     
     HAL_Delay(10);
     // i++;

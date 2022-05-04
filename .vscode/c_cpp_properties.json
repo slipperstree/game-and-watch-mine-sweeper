@@ -35,7 +35,7 @@
                 "/usr/local/include",
                 "${workspaceFolder}/Drivers/STM32H7xx_HAL_Driver/Inc",
                 "${workspaceFolder}/Core/Inc",
-                "${workspaceFolder}/Snake/Inc"
+                "${workspaceFolder}/Mine/Inc"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",
@@ -45,7 +45,7 @@
                     "/usr/local/include",
                     "${workspaceFolder}/Drivers/STM32H7xx_HAL_Driver/Inc",
                     "${workspaceFolder}/Core/Inc",
-                    "${workspaceFolder}/Snake/Inc"
+                    "${workspaceFolder}/Mine/Inc"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""

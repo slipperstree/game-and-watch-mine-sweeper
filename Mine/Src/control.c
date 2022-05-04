@@ -14,12 +14,6 @@
 #include "saveData.h"
 #include "embMineDevice.h"
 
-
-#if ISDEBUG
-extern void devShowString(u16 x,u16 y, u8 *str, Font_Type *fontType, u16 colorBg, u16 colorFont);
-extern void gameover();
-#endif
-
 u16 nowSpeed;
 u16 lastDemoSpeed;
 
@@ -85,10 +79,6 @@ void CTL_run(){
     // TODO:G&W? 本来是在定时器中断里面做的，GBA定时器中断有吗？
     ttWalk++;
     ttFlag++;
-
-    #if ISDEBUG
-    devShowString(0,0, "D", &FONT32, COLOR_BLACK, COLOR_YELLOW);
-    #endif
     
     if (nowMode == MODE_WELCOME_DEMO)
     {
@@ -532,9 +522,9 @@ void eventGame(){
             isWin = MineEventParam1;
             if(isWin == FALSE){
                 // 游戏失败，踩到雷了，让LED爆闪一下
-                LED_ALL_ON();
-                delay_ms(30);
-                LED_ALL_OFF();
+                //LED_ALL_ON();
+                My_delay_ms(30);
+                //LED_ALL_OFF();
             }
             // 跳转到游戏结束前状态（画面不迁移，便于观察游戏结果）
             nowMode = MODE_BEFROE_GAMEOVER;

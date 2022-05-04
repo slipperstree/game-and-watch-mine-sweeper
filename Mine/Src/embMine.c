@@ -338,7 +338,6 @@ void autoDig(u8 startX, u8 startY)
 
 						updView(x, y, MINE_VIEW_DIGED);
 						map[x][y].subDatas.isVisitied = TRUE;
-						LOG("     自动翻开!: x=%b2u,y=%b2u,sts=%b2u\r\n", x, y, map[x][y].subDatas.mineSts);
 
 						// 如果当前被翻开的这个格子是空地（非数字）那么需要继续下一轮循环以便继续寻找这个空地四周有没有连着的空地或数字
 						// 否则表示当前被翻开的这个格子是数字，那么只翻开这个格子就可以了，不用继续向周围扩张

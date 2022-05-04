@@ -21,6 +21,10 @@ u8* STR_GAMEOVER_NEWRECORD        = (u8*)"恭喜,刷新记录!";
 u8* STR_GAMEOVER_HSCORE           = (u8*)"记录:";
 u8* STR_GAMEOVER_SCORE            = (u8*)"用时:";
 
+u8* STR_GAMEOVER_INFO_EXIT        = (u8*)"EXIT : Press any button";
+
+#define FONT_BOTTOM_INFO          FONT_ASC12
+
 // 右侧信息栏元素位置
 #define FRAME_RIGHT_INFO_WIDTH  75
 #define TIME_X          250
@@ -174,6 +178,32 @@ u16 randRGB565DK(){
 
 void clearScreen(void){
     devFillRectange(0,0,SCREEN_W,SCREEN_H,COLOR_BG);
+}
+
+void devShowString(u16 x,u16 y, u8 *str,Font_Type *fontType, u16 colorBg, u16 colorFont)
+{
+	u8 j=0;
+    u8 charWidth;
+    Font_Type *lastUseFont;
+    char* str1 = NULL;
+
+	while (str[j]!='\0')
+	{
+        lastUseFont = showChar(x, y, &str[j], fontType, colorBg, colorFont);
+        charWidth = lastUseFont->fontWidth;
+
+		// 每输出一个字符或汉字后，向后位移一个字符或汉字的宽度
+        x+= lastUseFont->fontWidth;
+        // 自动换行
+		if(x>SCREEN_W-fontType->fontWidth){
+            x=0;
+            y+=fontType->fontHeight;
+        }
+        // 继续显示下一个字符或汉字
+		j++;
+        // 如果是汉字那么需要向后移动两个字节
+        if (lastUseFont->type == FONT_TYPE_HZ) j++;
+	}
 }
 
 void DISP_drawAllMap(){
@@ -639,7 +669,7 @@ void DISP_drawWelcome(u8 isStartUp){
 
     // 标题
     titleY = SCREEN_H/6;
-    showStringCenterColor(titleY, 0, &FONTHZ_TITLE64, COLOR_BG, COLOR_YELLOW, 0);
+    //showStringCenterColor(titleY, 0, &FONTHZ_TITLE64, COLOR_BG, COLOR_YELLOW, 0);
     devFillRectange(0, titleY, SCREEN_W, FONTHZ_TITLE64.fontHeight, COLOR_GRAYLT);
     showMutiBitImg((SCREEN_W-FONTHZ_TITLE64.fontWidth) / 2, titleY, 0, &FONTHZ_TITLE64, COLOR_GRAYLT, COLOR_GRAYDK, COLOR_GRAYDK, COLOR_BLACK,0,0,0);
 
@@ -652,7 +682,7 @@ void DISP_drawWelcome(u8 isStartUp){
 //isStartUp = 0;
     if (isStartUp)
     {
-        delay_ms(500);
+        My_delay_ms(500);
         // 学电LOGO缓缓出现的动画效果
         while(1){
             r+=5;
@@ -660,7 +690,7 @@ void DISP_drawWelcome(u8 isStartUp){
             showChar(logoX, logoY, FONT_HZ_XD_LOGO, &FONTHZ_XD_LOGO40, RGB888toRGB565(r, 0, 0), COLOR_BG);
         }
         // 出现后等待一会儿
-        Pre_Delay_ms(300);
+        My_delay_ms(300);
     } else {
         // 非上电画面，快速显示
         // 学电LOGO缓缓出现的动画效果
@@ -670,7 +700,7 @@ void DISP_drawWelcome(u8 isStartUp){
             showChar(logoX, logoY, FONT_HZ_XD_LOGO, &FONTHZ_XD_LOGO40, RGB888toRGB565(r, 0, 0), COLOR_BG);
         }
         // 出现后等待一会儿
-        //Pre_Delay_ms(500);
+        //My_delay_ms(500);
     }
 
     // 难度选择
@@ -840,6 +870,21 @@ void DISP_flashGameOver(u8 flashOnOff, u8 isNewRecord, u8* levelStr){
 
     // 闪烁文字 按任意键继续...
     showStringCenter(190, STR_PRESS_ANY_KEY, &FONTHZ32, flashOnOff);
+}
+
+// ##### 游戏介绍页
+void DISP_drawInfo(){
+    clearScreen();
+    devShowString(20, 30, "This is a port of the EmbMine(https://gitee.com/slipperstree/EmbMine) that runs on the Nintendo Game & Watch: Super Mario Bros / Zelda. game. You can find more information from following GitHub page.", &FONT_ASC16, COLOR_BG, COLOR_FO);
+    showStringCenterColor(160, "https://github.com/slipperstree/", &FONT_BOTTOM_INFO, COLOR_BG, COLOR_WINLOGO_Y, 0);
+    showStringCenterColor(174, "game-and-watch-snake", &FONT_BOTTOM_INFO, COLOR_BG, COLOR_WINLOGO_Y, 0);
+
+    showStringCenter(SCREEN_H - FONT_BOTTOM_INFO.fontHeight - 2, STR_GAMEOVER_INFO_EXIT, &FONT_BOTTOM_INFO, 0);
+}
+
+// ##### 游戏介绍页 定期被调用
+void DISP_flashInfo(u8 flashOnOff){
+
 }
 
 // 绘制框架

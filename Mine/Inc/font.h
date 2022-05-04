@@ -29,8 +29,8 @@ typedef struct
 
 // 英文字体(包含所有ASCII) --------------------
 //#define SUPPORT_CHAR_SIZE_8
-//#define SUPPORT_CHAR_SIZE_12
-//#define SUPPORT_CHAR_SIZE_16
+#define SUPPORT_CHAR_SIZE_12
+#define SUPPORT_CHAR_SIZE_16
 #define SUPPORT_CHAR_SIZE_20
 #define SUPPORT_CHAR_SIZE_32
 
@@ -68,10 +68,10 @@ typedef struct
   extern Font_Type FONT8;
 #endif
 #ifdef SUPPORT_CHAR_SIZE_12
-  extern Font_Type FONT12;
+  extern Font_Type FONT_ASC12;
 #endif
 #ifdef SUPPORT_CHAR_SIZE_16
-  extern Font_Type FONT16;
+  extern Font_Type FONT_ASC16;
 #endif
 #ifdef SUPPORT_CHAR_SIZE_20
   extern Font_Type FONT20;

@@ -1,4 +1,4 @@
-# Snake game for Nintendo Game &amp; Watch
+# Mine game for Nintendo Game &amp; Watch
 This is a port of the [embMine](https://gitee.com/slipperstree/embMine) that runs on the Nintendo Game &amp; Watch: Super Mario Bros / Zelda game.
 
 ## Before build
@@ -10,7 +10,7 @@ Build and flash by `make flash` in `game-and-watch-snake` directory
 Import this project into your STM32CubeIDE workspace by `Import -> General -> Existing Projects into Workspace` and build / debug it.
 
 ## 3. Just need the game rom
-You can just download [pre builded ELF file](/Release/gw_snake.elf) for test.
+You can just download [pre builded ELF file](/Release/gw_mine_sweeper.elf) for test.
 
 ## Features
 This game contains the following pages.

@@ -88,12 +88,12 @@ void devFillRectange(u16 x, u16 y, u16 width, u16 height, u16 color){
 
 // 关闭屏幕显示(跟函数devScreenON搭配使用，如无必要可不用实现留空即可，实现了更好，可以防止刷新画面的过程被用户看见)
 void devScreenOFF(){
-    //lcd_backlight_off();
+    lcd_backlight_off();
 }
 
 // 打开屏幕显示(跟函数devScreenOFF搭配使用，如无必要可不用实现留空即可，实现了更好，可以防止刷新画面的过程被用户看见)
 void devScreenON(){
-    //lcd_backlight_on();
+    lcd_backlight_on();
 }
 
 // =========================================================================================
