@@ -13,6 +13,9 @@
 // 临时变量用(sprintf等)
 extern u8 buff[128];
 
+// 当前光标位置
+u8 gDevCurPosX = 0, gDevCurPosY = 0;
+
 u16 drawAreaStartX = 0;
 u16 drawAreaStartY = 0;
 u16 drawAreaEndX = 0;
@@ -99,29 +102,41 @@ void devScreenON(){
 // TODO:
 
 // =========================================================================================
+// ==    光标相关       =====================================================================
+// =========================================================================================
+
+// 更新当前光标位置（主循环会不停调用这个接口以刷新画面上的光标）
+void devUpdateCurPos(){
+    // TODO: gw不使用陀螺仪，要改成按键控制光标的方式，暂时固定
+    gDevCurPosX = 2;
+    gDevCurPosY = 2;
+}
+
+
+// =========================================================================================
 // ==    储存相关       =====================================================================
 // =========================================================================================
 
 // 保存配置用EEPROM地址
 #define SD_ADDR_PAGE_BASE       0x000
-#define SD_ADDR_HSCORE_H        SD_ADDR_PAGE_BASE
-#define SD_ADDR_HSCORE_L        SD_ADDR_HSCORE_H+1
-#define SD_ADDR_SOUND           SD_ADDR_HSCORE_L+1
+#define SD_ADDR_HSCORE_LVL1_H   SD_ADDR_PAGE_BASE
+#define SD_ADDR_HSCORE_LVL1_L   SD_ADDR_HSCORE_LVL1_H+1
+#define SD_ADDR_HSCORE_LVL2_H   SD_ADDR_HSCORE_LVL1_L+1
+#define SD_ADDR_HSCORE_LVL2_L   SD_ADDR_HSCORE_LVL2_H+1
+#define SD_ADDR_HSCORE_LVL3_H   SD_ADDR_HSCORE_LVL2_L+1
+#define SD_ADDR_HSCORE_LVL3_L   SD_ADDR_HSCORE_LVL3_H+1
+#define SD_ADDR_SOUND           SD_ADDR_HSCORE_LVL3_L+1
 #define SD_ADDR_COLOR_BG_H      SD_ADDR_SOUND+1
 #define SD_ADDR_COLOR_BG_L      SD_ADDR_COLOR_BG_H+1
 #define SD_ADDR_COLOR_FO_H      SD_ADDR_COLOR_BG_L+1
 #define SD_ADDR_COLOR_FO_L      SD_ADDR_COLOR_FO_H+1
-#define SD_ADDR_COLOR_SNAKE_H   SD_ADDR_COLOR_FO_L+1
-#define SD_ADDR_COLOR_SNAKE_L   SD_ADDR_COLOR_SNAKE_H+1
-#define SD_ADDR_COLOR_APPLE_H   SD_ADDR_COLOR_SNAKE_L+1
-#define SD_ADDR_COLOR_APPLE_L   SD_ADDR_COLOR_APPLE_H+1
-#define SD_ADDR_COLOR_FRAME_H   SD_ADDR_COLOR_APPLE_L+1
+#define SD_ADDR_COLOR_FRAME_H   SD_ADDR_COLOR_FO_L+1
 #define SD_ADDR_COLOR_FRAME_L   SD_ADDR_COLOR_FRAME_H+1
 #define SD_ADDR_PAGE_LAST5      0x1FB
 
-#define H8(DATA16)              (u8) ((DATA16>>8) & 0xFF)
-#define L8(DATA16)              (u8) (DATA16 & 0xFF)
-#define HL16(DATA16H8,DATA16L8) (u16)  ((DATA16H8)*256 + (DATA16L8 & 0xFF))
+#define H8(DATA16)              (unsigned char) ((DATA16>>8) & 0xFF)
+#define L8(DATA16)              (unsigned char) (DATA16 & 0xFF)
+#define HL16(DATA16H8,DATA16L8) (unsigned int)  ((DATA16H8)*256 + (DATA16L8 & 0xFF))
 #define READ8(ADDR)             EEPROM_Read_Byte(ADDR)
 #define READ16(ADDR)            HL16(EEPROM_Read_Byte(ADDR), EEPROM_Read_Byte(ADDR+1))
 #define WRITE8(ADDR,DATA8)      EEPROM_Write_Byte(ADDR, DATA8)
@@ -134,18 +149,18 @@ void devLoadSetting(SaveData_Struct *setting){
     // // 检查是否已经初始化过（如果是首次上电，EEPROM中还不存在配置，此时的数据不可以用）
     // // 检查方法是看扇区最后5个字节的内容是否是预设好的内容。
     // EEPROM_Read_Arry(SD_ADDR_PAGE_LAST5, buff, 5);
-    // if (buff[0]!='C' || buff[1]!='L' || buff[2]!='I' || buff[3]!='N' || buff[4]!='G')
+    // if (buff[0]!='C' || buff[1]!='M' || buff[2]!='I' || buff[3]!='N' || buff[4]!='E')
     // {
     //     // 如果不是，则保存传入的默认设置
     //     devSaveSetting(setting);
     // } else {
     //     // 读配置
-    //     setting->hiScore         = READ16(SD_ADDR_HSCORE_H);
+    //     setting->hiScoreLvl1     = READ16(SD_ADDR_HSCORE_LVL1_H);
+    //     setting->hiScoreLvl2     = READ16(SD_ADDR_HSCORE_LVL2_H);
+    //     setting->hiScoreLvl3     = READ16(SD_ADDR_HSCORE_LVL3_H);
     //     setting->soundOnOff      = READ8 (SD_ADDR_SOUND);
     //     setting->colorBackGround = READ16(SD_ADDR_COLOR_BG_H);
     //     setting->colorFront      = READ16(SD_ADDR_COLOR_FO_H);
-    //     setting->colorSnake      = READ16(SD_ADDR_COLOR_SNAKE_H);
-    //     setting->colorApple      = READ16(SD_ADDR_COLOR_APPLE_H);
     //     setting->colorFrame      = READ16(SD_ADDR_COLOR_FRAME_H);
     // }
 }
@@ -156,14 +171,14 @@ void devSaveSetting(SaveData_Struct *setting){
     // // 先擦除扇区
     // EEPROM_Erase_Page(SD_ADDR_PAGE_BASE);
     // // 写数据
-    // WRITE16(SD_ADDR_HSCORE_H,       setting->hiScore);
+    // WRITE16(SD_ADDR_HSCORE_LVL1_H,  setting->hiScoreLvl1);
+    // WRITE16(SD_ADDR_HSCORE_LVL2_H,  setting->hiScoreLvl2);
+    // WRITE16(SD_ADDR_HSCORE_LVL3_H,  setting->hiScoreLvl3);
     // WRITE8 (SD_ADDR_SOUND,          setting->soundOnOff);
     // WRITE16(SD_ADDR_COLOR_BG_H,     setting->colorBackGround);
     // WRITE16(SD_ADDR_COLOR_FO_H,     setting->colorFront);
-    // WRITE16(SD_ADDR_COLOR_SNAKE_H,  setting->colorSnake);
-    // WRITE16(SD_ADDR_COLOR_APPLE_H,  setting->colorApple);
     // WRITE16(SD_ADDR_COLOR_FRAME_H,  setting->colorFrame);
-    // EEPROM_Write_Str(SD_ADDR_PAGE_LAST5, "CLING");
+    // EEPROM_Write_Str(SD_ADDR_PAGE_LAST5, "CMINE");
 
 }
 
@@ -199,11 +214,15 @@ void playBeepShort(){
 }
 
 // 播放声音
+// 播放声音
 void devPlaySound(Sound_Type soundType){
 
     switch (soundType)
     {
-    case SOUND_EAT_APPLE:
+    case SOUND_CLICK:
+        playBeepShort();
+        break;
+    case SOUND_FLAG:
         playBeepShort();
         break;
     case SOUND_HISCORE:
@@ -252,29 +271,5 @@ void devEnterGameOverPage(){
 // ==    其他          =====================================================================
 // =========================================================================================
                                 
-// 当玩家改变游戏速度时会调用这个函数，请实现想要的效果(比如点亮不同的LED)
-void devSpeedChanged(u16 speed){
 
-    switch (speed)
-    {
-    case SPEED_DEMO_L:
-        LED_ALL_OFF();
-        break;
-    case SPEED_DEMO_M:
-        LED_R_ON();
-        LED_Y_OFF();
-        LED_G_OFF();
-        break;
-    case SPEED_DEMO_H:
-        LED_R_ON();
-        LED_Y_ON();
-        LED_G_OFF();
-        break;
-    case SPEED_DEMO_S:
-        LED_ALL_ON();
-        break;
-    default:
-        break;
-    }
-}
 
