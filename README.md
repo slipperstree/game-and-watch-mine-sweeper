@@ -1,44 +1,33 @@
 # Mine game for Nintendo Game &amp; Watch
-This is a port of the [embMine](https://gitee.com/slipperstree/embMine) that runs on the Nintendo Game &amp; Watch: Super Mario Bros / Zelda game.
+This is a mine-sweeper game runs on the Nintendo Game &amp; Watch: Super Mario Bros / Zelda system.
 
 ## Before build
 You need backup your G&W first. See [game-and-watch-backup](https://github.com/ghidraninja/game-and-watch-backup)
 ## 1. Build / Flash in command line
-Build and flash by `make flash` in `game-and-watch-snake` directory
+Build and flash by `make flash` in `game-and-watch-mine-sweeper` directory
 
 ## 2. Build / Flash / Debug with STM32CubeIDE
 Import this project into your STM32CubeIDE workspace by `Import -> General -> Existing Projects into Workspace` and build / debug it.
 
 ## 3. Just need the game rom
-You can just download [pre builded ELF file](/Release/gw_mine_sweeper.elf) for test.
-
-## Features
-This game contains the following pages.
-- Home
-- Demo mode (which can play game it self just like G&W mario or zelda TIME MODE does)
-- Game mode (which you can play by yourself)
-- Game over page (Hiscore cannot be saved in flash by now)
-- etc.
+You can just download [pre builded ELF file](./Release/gw_mine_sweeper.elf) for test.
 
 ## Controls
-- Press any button at Home page will start a new game.
-- Wait a while at Home page will start demo.
-- Swich Game / Demo mode by press GAME / TIME button.
-- Other operation will show at the bottom of screen.
+- Select a level at home page and press A to start game.
+- Button A for dig, B for flag.
+- If a digit block already has enough flags next to it. You can dig(A) on it for clear all blocks around it.
 - Power off (sleep) by press power button.
 
 ## Pictures
-- ![Home](/Pics/Home.jpg)
-- ![Demo](/Pics/Demo.jpg)
-- ![Game](/Pics/Game.jpg)
-- ![GameOver](/Pics/GameOver.jpg)
+- ![Home](./Pics/home.jpg)
+- ![Game](./Pics/game.jpg)
+- ![Boom](./Pics/boom.jpg)
+- ![GameOver](./Pics/gameover.jpg)
 
 ## Tasks
 - Some simple sound
 - Save hi-score
 - Screen bright
-- Show a DigitClock at demo mode (snake will eat digit for update time)
-- [Done]Sleep when Power button pushed
 
 ## Thanks
 - This project is based on [game-and-watch-base](https://github.com/ghidraninja/game-and-watch-base).
