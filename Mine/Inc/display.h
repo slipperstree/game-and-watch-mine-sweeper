@@ -19,7 +19,7 @@ void DISP_setForeColor(u16 color);
 void DISP_setFrameColor(u16 color);
 
 void DISP_drawWelcome(u8 isStartUp);            // 绘制欢迎页
-void DISP_flashWelcome(u8 flashOnOff);          // 绘制欢迎页闪烁文字
+void DISP_flashWelcome(u8 flashOnOff, u8 gamelevel);          // 绘制欢迎页闪烁文字
 
 void DISP_flashBeforeGameOver(u8 flashOnOff, u8 isWin); // 绘制游戏结束前面一页
 

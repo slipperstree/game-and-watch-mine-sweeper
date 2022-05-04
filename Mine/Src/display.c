@@ -9,6 +9,9 @@
 // 屏幕较小的话要改短一些,大屏也不要太长,预留的缓冲区只有128字节,超出的话会发生未知问题
 u8* STR_PRESS_ANY_KEY             = (u8*)"Press any btn";
 u8* STR_LEVEL_SEL                 = (u8*)"Up:Easy Down:Normal Right:Hard";
+u8* STR_LEVEL_SEL_EASY            = (u8*)"Easy";
+u8* STR_LEVEL_SEL_NORMAL          = (u8*)"Normal";
+u8* STR_LEVEL_SEL_HARD            = (u8*)"Hard";
 
 u8* STR_GAME_TOP_INFO             = (u8*)"B:Flag A:Dig";
 
@@ -28,15 +31,21 @@ u8* STR_GAMEOVER_INFO_EXIT        = (u8*)"EXIT : Press any button";
 #define FONT_BOTTOM_INFO          FONT_ASC12
 // 菜单字体
 #define FONT_MENU_INFO            FONT_ASC12
+// LEVEL SEL
+#define FONT_LEVEL_SEL            FONT20
 // 其他文字的字体，比如GameOver，按任意键继续
 #define FONT_OTHER_TEXT           FONT_ASC32
+
+// Welcome level sel
+#define LEVEL_SEL_E_Y         130
+#define LEVEL_SEL_N_Y         160
+#define LEVEL_SEL_H_Y         190
 
 // Gameover page
 #define  TITLE_Y         15
 #define  SCROE_Y         80
 #define HSCROE_Y        120
 
-// 右侧信息栏元素位置
 #define FRAME_RIGHT_INFO_WIDTH  75
 #define TIME_X           18
 #define TIME_Y            3
@@ -687,18 +696,38 @@ void DISP_drawWelcome(u8 isStartUp){
     // 标题
     titleY = SCREEN_H/6;
     //showStringCenterColor(titleY, 0, &FONTHZ_TITLE64, COLOR_BG, COLOR_YELLOW, 0);
-    devFillRectange(0, titleY, SCREEN_W, FONTHZ_TITLE64.fontHeight, COLOR_GRAYLT);
+    devFillRectange(0, titleY-5, SCREEN_W, FONTHZ_TITLE64.fontHeight + 10, COLOR_GRAYLT);
     showMutiBitImg((SCREEN_W-FONTHZ_TITLE64.fontWidth) / 2, titleY, 0, &FONTHZ_TITLE64, COLOR_GRAYLT, COLOR_GRAYDK, COLOR_GRAYDK, COLOR_BLACK,0,0,0);
 
     devScreenON();
 
     // 难度选择
-    showStringCenter(SCREEN_H - FONT_BOTTOM_INFO.fontHeight - 2, STR_LEVEL_SEL, &FONT_BOTTOM_INFO, 0);
+    showStringCenter(LEVEL_SEL_E_Y, STR_LEVEL_SEL_EASY, &FONT_LEVEL_SEL, 0);
+    showStringCenter(LEVEL_SEL_N_Y, STR_LEVEL_SEL_NORMAL, &FONT_LEVEL_SEL, 0);
+    showStringCenter(LEVEL_SEL_H_Y, STR_LEVEL_SEL_HARD, &FONT_LEVEL_SEL, 0);
+
+    //showStringCenter(SCREEN_H - FONT_LEVEL_SEL.fontHeight - 2, STR_LEVEL_SEL, &FONT_LEVEL_SEL, 0);
 }
 
 // ##### 首页 定期被调用
-void DISP_flashWelcome(u8 flashOnOff){
-    
+void DISP_flashWelcome(u8 flashOnOff, u8 gamelevel){
+    if (flashOnOff)
+    {
+        showStringCenter(LEVEL_SEL_E_Y, STR_LEVEL_SEL_EASY, &FONT_LEVEL_SEL, 0);
+        showStringCenter(LEVEL_SEL_N_Y, STR_LEVEL_SEL_NORMAL, &FONT_LEVEL_SEL, 0);
+        showStringCenter(LEVEL_SEL_H_Y, STR_LEVEL_SEL_HARD, &FONT_LEVEL_SEL, 0);
+        //showStringCenter(SCREEN_H - FONT_LEVEL_SEL.fontHeight - 2, STR_LEVEL_SEL, &FONT_LEVEL_SEL, 0);
+    } else {
+        // Flash seleted one
+        if(gamelevel==GAME_LVL_1){
+            showStringCenter(LEVEL_SEL_E_Y, STR_LEVEL_SEL_EASY, &FONT_LEVEL_SEL, 1);
+        } else if(gamelevel==GAME_LVL_2){
+            showStringCenter(LEVEL_SEL_N_Y, STR_LEVEL_SEL_NORMAL, &FONT_LEVEL_SEL, 1);
+        } else {
+            showStringCenter(LEVEL_SEL_H_Y, STR_LEVEL_SEL_HARD, &FONT_LEVEL_SEL, 1);
+        }
+        //showStringCenter(SCREEN_H - FONT_LEVEL_SEL.fontHeight - 2, STR_LEVEL_SEL, &FONT_LEVEL_SEL, 1);
+    }
 }
 
 // ##### Demo页 初始化时被调用一次
@@ -845,9 +874,9 @@ void DISP_flashGameOver(u8 flashOnOff, u8 isNewRecord, u8* levelStr){
 // ##### 游戏介绍页
 void DISP_drawInfo(){
     clearScreen();
-    devShowString(20, 30, "This is a port of the EmbMine(https://gitee.com/slipperstree/EmbMine) that runs on the Nintendo Game & Watch: Super Mario Bros / Zelda. game. You can find more information from following GitHub page.", &FONT_ASC16, COLOR_BG, COLOR_FO);
+    devShowString(20, 30, "This is a mine-sweeper game that runs on the Nintendo Game & Watch: Super Mario Bros / Zelda system. You can find more information from following GitHub page.", &FONT_ASC16, COLOR_BG, COLOR_FO);
     showStringCenterColor(160, "https://github.com/slipperstree/", &FONT_BOTTOM_INFO, COLOR_BG, COLOR_WINLOGO_Y, 0);
-    showStringCenterColor(174, "game-and-watch-snake", &FONT_BOTTOM_INFO, COLOR_BG, COLOR_WINLOGO_Y, 0);
+    showStringCenterColor(174, "game-and-watch-mine-sweeper", &FONT_BOTTOM_INFO, COLOR_BG, COLOR_WINLOGO_Y, 0);
 
     showStringCenter(SCREEN_H - FONT_BOTTOM_INFO.fontHeight - 2, STR_GAMEOVER_INFO_EXIT, &FONT_BOTTOM_INFO, 0);
 }

@@ -39,7 +39,7 @@ u16 ttFlagQuick = 0;
 u16 ttGameTime = 0;
 
 // 游戏难度
-u8 gameLevel = 0;
+u8 gameLevel = GAME_LVL_1;
 
 // 游戏时间
 u8 isPlaying = FALSE;
@@ -148,7 +148,7 @@ void CTL_run(){
             } else {
                 // 画面动态效果
                 if (flashFlag) {
-                    DISP_flashWelcome(flashOnOff);
+                    DISP_flashWelcome(flashOnOff, gameLevel);
                     //禁用Demo模式，注释掉下面这句即可
                     //welcomeWaitTime++;
                 }
@@ -247,46 +247,54 @@ void doBtnCommon(u8 btnNo, u8 event_id){
             switch (btnNo)
             {
             case KEY_UP:
-                // HOME-简单
-                gameLevel = GAME_LVL_1;
+                if (gameLevel == GAME_LVL_3)
+                {
+                    gameLevel = GAME_LVL_2;
+                } else if (gameLevel == GAME_LVL_2){
+                    gameLevel = GAME_LVL_1;
+                } else {
+                    gameLevel = GAME_LVL_3;
+                }
                 break;
             case KEY_DOWN:
-                // HOME-普通
-                gameLevel = GAME_LVL_2;
+                if (gameLevel == GAME_LVL_1)
+                {
+                    gameLevel = GAME_LVL_2;
+                } else if (gameLevel == GAME_LVL_2){
+                    gameLevel = GAME_LVL_3;
+                } else {
+                    gameLevel = GAME_LVL_1;
+                }
                 break;
-            case KEY_RIGHT:
-                // HOME-困难
-                gameLevel = GAME_LVL_3;
+            case KEY_A:
+                // 从标题画面 进入游戏画面
+                nowMode = MODE_GAME;
+
+                // 关屏
+                devScreenOFF();
+
+                // 绘制游戏画面
+                DISP_drawGame(gSetting.soundOnOff, gameLevel);
+
+                // MINE_restart之前一定要先绘制游戏画面!! 保证框架的位置被正确设置
+                MINE_setMineNUM(gameLevel);
+                MINE_restart();
+
+                // 游戏时间清零
+                gameSec = 0;
+
+                // 游戏状态恢复
+                isWin = FALSE;
+
+                // restart之后绘制游戏初期状态，绘制全地图
+                DISP_drawAllMap();
+
+                // 开屏
+                devScreenON();
                 break;
             default:
-                return;
                 break;
             }
-
-            // 从标题画面 进入游戏画面
-            nowMode = MODE_GAME;
-
-            // 关屏
-            devScreenOFF();
-
-            // 绘制游戏画面
-            DISP_drawGame(gSetting.soundOnOff, gameLevel);
-
-            // MINE_restart之前一定要先绘制游戏画面!! 保证框架的位置被正确设置
-            MINE_setMineNUM(gameLevel);
-            MINE_restart();
-
-            // 游戏时间清零
-            gameSec = 0;
-
-            // 游戏状态恢复
-            isWin = FALSE;
-
-            // restart之后绘制游戏初期状态，绘制全地图
-            DISP_drawAllMap();
-
-            // 开屏
-            devScreenON();
             break;
         default:
             break;
