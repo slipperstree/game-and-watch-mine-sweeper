@@ -3,7 +3,7 @@
  * Author: MANDA (slipperstree@gmail.com)
  * Date  : 2019.11
  * Updt  : 2021.07
- * Func  : 贪食蛇游戏控制器，统管snake和display等模块
+ * Func  : 游戏控制器，统管各模块
 ***************************************************/
 
 #include "common.h"
@@ -27,31 +27,47 @@ u16 lastDemoSpeed;
 #define MODE_WELCOME 0
 #define MODE_WELCOME_DEMO 1
 #define MODE_GAME 2
-#define MODE_GAMEOVER 3
-#define MODE_INFO 4
+#define MODE_BEFROE_GAMEOVER 3
+#define MODE_GAMEOVER 4
+#define MODE_INFO 5
 
 u8 nowMode;
 u16 maxDemoScore, totalDemoScore, totalDemoCnt, avgDemoScore, lastDemoScore;
-u16 oldSaveDataHScore=0, lastGameScore=0;
+u16 oldSaveDataBestTime=0, lastGameTime=0;
 u8 welcomeWaitTime;
 u8 tmpX, tmpY;
 u8 flashFlag = 0, flashOnOff = 0;
+u8 flashFlagQuick = 0, flashOnOffQuick = 0;
 
 // 各种全局心跳flg，在定时器中递增
 u16 ttWalk = 0,ttFlag = 0;
+u16 ttFlagQuick = 0;
+u16 ttGameTime = 0;
+
+// 游戏难度
+#define GAME_LVL_1   10
+#define GAME_LVL_2   16
+#define GAME_LVL_3   22
+u8 gameLevel = 0;
+
+// 游戏时间
+u8 isPlaying = FALSE;
+u8 isWin = FALSE;
+u16 gameSec = 0;
+
+// 当前光标位置
+extern u8 gDevCurPosX, gDevCurPosY;
+
+// 上次光标位置（用于删除旧位置上的光标）
+u8 lastCurX, lastCurY;
+
+// 锁定光标标记
+u8 lockCurFlg;
 
 // 为编译通过，内部函数提前定义部分（外部不需要调用，不放在头文件中）
 void goPageWelcome(u8 isStartup);
-void eventSnake();
-void setDemoSpeed(u16 speed);
+void eventGame();
 void switchSound();
-void resetDemoWall();
-
-#ifdef SNAKE_AI_DEBUG
-u8 isPauseAfterEatAppleMode, isPauseEveryStep, isPause;
-void updateBlockAI(u8 x, u8 y);
-void updateAllAI();
-#endif
 
 // 临时变量用(sprintf等)
 extern u8 buff[128];
@@ -61,6 +77,7 @@ extern u8 buff[128];
 // =====================================
 void CTL_run(){
 	u16 flashSpeed=0;
+    u16 flashSpeedQuick=100;
 
     KEY_keyscan();
 
@@ -78,6 +95,30 @@ void CTL_run(){
         flashSpeed = 30;
     } else {
         flashSpeed = 30;
+    }
+
+    if (ttFlagQuick > flashSpeedQuick)
+    {
+        ttFlagQuick = 0;
+        flashFlagQuick = 1;
+        if (flashOnOffQuick == 1)
+        {
+            flashOnOffQuick = 0;
+        } else {
+            flashOnOffQuick = 1;
+        }
+    }
+
+    //TODO: GW 1sec ?
+    if (ttGameTime >= 1000) {
+        ttGameTime = 0;
+        if (isPlaying)
+        {
+            // 更新游戏时间
+            gameSec++;
+            DISP_updateTime(gameSec);
+        }
+        
     }
 
     if (ttFlag > flashSpeed)
@@ -111,64 +152,69 @@ void CTL_run(){
                 welcomeWaitTime = 0;
 
                 // 一定要先绘制Demo画面!! 保证框架的位置被正确设置
-                // 一旦restartSNAKE就会尝试绘制最初的几个block（初始蛇，食物）
-                // 这个函数里面会先清除地图上所有内容包括蛇食物和障碍物,然后会回调一个RESTART的事件，如果需要障碍物在事件响应中设置障碍物
-                // 回调函数执行完毕后会设置固定的开始位置（左上角横向3个block蛇头向右）并在没有障碍物的空位随机生成一个食物。（所以设置障碍物不可占用左上3个block）
-                SNAKE_restart();
+                MINE_restart();
+
+                // restart之后绘制游戏初期状态，绘制全地图
+                DISP_drawAllMap();
             } else {
                 // 画面动态效果
                 if (flashFlag) {
                     DISP_flashWelcome(flashOnOff);
-                    welcomeWaitTime++;
+                    //禁用Demo模式，注释掉下面这句即可
+                    //welcomeWaitTime++;
                 }
             }
             break;
 
         case MODE_WELCOME_DEMO:
 
-            #if ISDEBUG
-                // 吃N个苹果就强制结束demo
-                if (SNAKE_getNowScroe() > DEBUG_DEMO_APPLE){
-                    // 模拟gameover
-                    LOG("模拟gameover...\r\n");
-                    SnakeEventId = SNAKE_EVENT_GAMEOVER;
-                    SnakeEventParam1 = SNAKE_getNowScroe();
-                    SnakeEventParam2 = 0;
-                    eventSnake();
-                    LOG("模拟gameover done.\r\n");
-                    return;
-                }
-            #endif
-
-            // AI前进一步
-            if (ttWalk >= nowSpeed)
-            {
-                ttWalk = 0;
-                SNAKE_AI_moveNext();
-
-                #ifdef SNAKE_AI_DEBUG
-                updateAllAI();
-                #endif
-            }
-
-            if (flashFlag) {
-                DISP_flashDemo(flashOnOff);
-            }
+            // DO NOTHING
             
             break;
 
         case MODE_GAME:
-            // 自动前进
-            if (ttWalk >= nowSpeed)
-            {
-                ttWalk = 0;
-                SNAKE_moveNext();
+            // 在没有锁定光标的时候，不停获取当前光标位置并绘制
+            if(!lockCurFlg){
+                devUpdateCurPos();
+                if(gDevCurPosX != lastCurX || gDevCurPosY != lastCurY){
+                    DISP_hideCusor(lastCurX, lastCurY);
+                    DISP_showCusor(gDevCurPosX, gDevCurPosY);
+
+                    lastCurX = gDevCurPosX;
+                    lastCurY = gDevCurPosY;
+                }
+            }
+
+            // 闪烁光标
+            if (flashFlagQuick) {
+                if (flashOnOffQuick)
+                {
+                    DISP_hideCusor(gDevCurPosX, gDevCurPosY);
+                } else {
+                    DISP_showCusor(gDevCurPosX, gDevCurPosY);
+                }
+            }
+            
+            break;
+
+        case MODE_BEFROE_GAMEOVER:
+            // TODO:这里判断是否失败如果是失败则闪烁暴雷的地方，如果是通关则可在右上角显示一个笑脸
+            if (flashFlag == 1) {
+                DISP_flashBeforeGameOver(flashOnOff, isWin);
             }
             break;
+
         case MODE_GAMEOVER:
             // Gameover画面动态效果
             if (flashFlag == 1) {
-                DISP_flashGameOver(flashOnOff, lastGameScore > oldSaveDataHScore ? 1 : 0);
+                if (gameLevel == GAME_LVL_1)
+                {
+                    DISP_flashGameOver(flashOnOff, (isWin && lastGameTime < oldSaveDataBestTime) ? TRUE : FALSE , "简单");
+                } else if (gameLevel == GAME_LVL_2) {
+                    DISP_flashGameOver(flashOnOff, (isWin && lastGameTime < oldSaveDataBestTime) ? TRUE : FALSE , "普通");
+                } else if (gameLevel == GAME_LVL_3) {
+                    DISP_flashGameOver(flashOnOff, (isWin && lastGameTime < oldSaveDataBestTime) ? TRUE : FALSE , "困难");
+                }
             }
             break;
         case MODE_INFO:
@@ -202,13 +248,56 @@ void doBtnCommon(u8 btnNo, u8 event_id){
 
             devEnterGamePage();
 
+            // 初始化光标位置
+            lastCurX = MINE_SIZE_X / 2;
+            lastCurY = MINE_SIZE_Y / 2;
+
+            // 初始化锁定光标标记（解锁状态）
+            lockCurFlg = 0;
+
+            // 继续判断是哪个按键
+            switch (btnNo)
+            {
+            case KEY_A:
+                // HOME-简单
+                gameLevel = GAME_LVL_1;
+                break;
+            case KEY_B:
+                // HOME-普通
+                gameLevel = GAME_LVL_2;
+                break;
+            case KEY_TIME:
+                // HOME-困难
+                gameLevel = GAME_LVL_3;
+                break;
+            default:
+                break;
+            }
+
             // 任意键 从标题画面 进入游戏画面
             nowMode = MODE_GAME;
-            // 绘制游戏画面
-            DISP_drawGame(gSetting.soundOnOff);
 
-            // SNAKE_restart之前一定要先绘制游戏画面!! 保证框架的位置被正确设置
-            SNAKE_restart();
+            // 关屏
+            devScreenOFF();
+
+            // 绘制游戏画面
+            DISP_drawGame(gSetting.soundOnOff, gameLevel);
+
+            // MINE_restart之前一定要先绘制游戏画面!! 保证框架的位置被正确设置
+            MINE_setMineNUM(gameLevel);
+            MINE_restart();
+
+            // 游戏时间清零
+            gameSec = 0;
+
+            // 游戏状态恢复
+            isWin = FALSE;
+
+            // restart之后绘制游戏初期状态，绘制全地图
+            DISP_drawAllMap();
+
+            // 开屏
+            devScreenON();
             break;
         default:
             break;
@@ -216,50 +305,7 @@ void doBtnCommon(u8 btnNo, u8 event_id){
         break;
     // Demo页 -----------------------------------
     case MODE_WELCOME_DEMO:
-        switch (event_id)
-        {
-        // 按键按下
-        case KEY_EVENT_DOWN:
-            // LOG("KEY_EVENT_DOWN in MODE_WELCOME_DEMO\r\n");
-            // sprintf(buff, "btn=%b2d nowModeA=%b2d\r\n", btnNo, nowMode);LOG(buff);
-
-            // 继续判断是哪个按键
-            switch (btnNo)
-            {
-            case KEY_B:
-                // Demo-按键B=切换速度
-                if (nowSpeed == SPEED_DEMO_L) {
-                    setDemoSpeed(SPEED_DEMO_M);
-                } else if (nowSpeed == SPEED_DEMO_M) {
-                    setDemoSpeed(SPEED_DEMO_H);;
-                } else if (nowSpeed == SPEED_DEMO_H) {
-                    setDemoSpeed(SPEED_DEMO_S);
-                } else if (nowSpeed == SPEED_DEMO_S) {
-                    setDemoSpeed(SPEED_DEMO_L);
-                }
-                break;
-            case KEY_GAME:
-                devEnterGamePage();
-                // 进入游戏画面
-                nowMode = MODE_GAME;
-                // 绘制游戏画面
-                DISP_drawGame(gSetting.soundOnOff);
-                // SNAKE_restart之前一定要先绘制游戏画面!! 保证框架的位置被正确设置
-                SNAKE_restart();
-                break;
-            // case KEY_PAUSE:
-            //     // Demo-按键SELECT=切换声音
-            //     switchSound();
-            //    break;
-            default:
-                // Demo-其他按键=返回标题画面
-                goPageWelcome(DISP_NO);
-                break;
-            }
-            break;
-        default:
-            break;
-        }
+        // DO NOTHING
         break;
     // 游戏页 -----------------------------------
     case MODE_GAME:
@@ -270,41 +316,87 @@ void doBtnCommon(u8 btnNo, u8 event_id){
             // LOG("KEY_EVENT_DOWN in MODE_GAME\r\n");
             // sprintf(buff, "btn=%b2d nowModeA=%b2d\r\n", btnNo, nowMode);LOG(buff);
 
-            // 手动移动成功的话，自动前进计时清零
-            if ((btnNo == KEY_UP && SNAKE_moveUp()) || 
-                (btnNo == KEY_DOWN && SNAKE_moveDown()) ||
-                (btnNo == KEY_LEFT && SNAKE_moveLeft()) ||
-                (btnNo == KEY_RIGHT && SNAKE_moveRight())
-                ) {
-                // 手动移动成功的话，自动前进计时清零
-                ttWalk = 0;
-            }
-
-            // if (btnNo == KEY_PAUSE) {
-            //     // 切换声音
-            //     switchSound();
-            // }
-
-            if (btnNo == KEY_TIME) {
-                // 进入Demo
-                devEnterDemoPage();
-                nowMode = MODE_WELCOME_DEMO;
-                // 绘制Demo画面
-                DISP_drawDemo(gSetting.soundOnOff);
-                SNAKE_restart();
+            switch (btnNo)
+            {
+            case KEY_LEFT:
+                // Game-按键1=锁定光标
+                lockCurFlg = 1;
+                DISP_drawLock();
+                break;
+            case KEY_B:
+                // Game-按键2=插旗
+                devPlaySound(SOUND_FLAG);
+                MINE_switchFlag(gDevCurPosX, gDevCurPosY);
+                break;
+            case KEY_A:
+                // Game-按键3=点击
+                devPlaySound(SOUND_CLICK);
+                MINE_click(gDevCurPosX, gDevCurPosY);
+                break;
+            default:
+                break;
             }
             break;
-        // 按键按被按住不放（连发）
-        case KEY_EVENT_KEEPING_PRESS:
-            if ((btnNo == KEY_UP && SNAKE_moveUp()) || 
-                (btnNo == KEY_DOWN && SNAKE_moveDown()) ||
-                (btnNo == KEY_LEFT && SNAKE_moveLeft()) ||
-                (btnNo == KEY_RIGHT && SNAKE_moveRight())
-                )
+        // 按键抬起
+        case KEY_EVENT_UP:
+            switch (btnNo)
             {
-                SNAKE_moveNext();
-                ttWalk = 0;
+            case KEY_LEFT:
+                // Game-按键1=释放光标
+                lockCurFlg = 0;
+                DISP_drawUnLock();
+                break;
+            default:
+                break;
             }
+            break;
+        default:
+            break;
+        }
+        break;
+    // 游戏结束时的过渡状态，按任意键进入游戏结束画面
+    case MODE_BEFROE_GAMEOVER:
+        switch (event_id)
+        {
+        // 按键按下
+        case KEY_EVENT_DOWN:
+
+            devEnterGameOverPage();
+
+            lastGameTime = gameSec;
+            if (gameLevel == GAME_LVL_1)
+            {
+                oldSaveDataBestTime = gSetting.hiScoreLvl1;
+                DISP_drawGameOver(isWin, "简单", lastGameTime, oldSaveDataBestTime);
+            } else if (gameLevel == GAME_LVL_2) {
+                oldSaveDataBestTime = gSetting.hiScoreLvl2;
+                DISP_drawGameOver(isWin, "普通", lastGameTime, oldSaveDataBestTime);
+            } else if (gameLevel == GAME_LVL_3) {
+                oldSaveDataBestTime = gSetting.hiScoreLvl3;
+                DISP_drawGameOver(isWin, "困难", lastGameTime, oldSaveDataBestTime);
+            }
+
+            //如果得分超过了最高分则更新最高分并保存
+            if (isWin){
+                if (gameLevel == GAME_LVL_1 && lastGameTime < gSetting.hiScoreLvl1)
+                {
+                    gSetting.hiScoreLvl1 = lastGameTime;
+                    SD_saveSetting();
+                }
+                if (gameLevel == GAME_LVL_2 && lastGameTime < gSetting.hiScoreLvl2)
+                {
+                    gSetting.hiScoreLvl2 = lastGameTime;
+                    SD_saveSetting();
+                }
+                if (gameLevel == GAME_LVL_3 && lastGameTime < gSetting.hiScoreLvl3)
+                {
+                    gSetting.hiScoreLvl3 = lastGameTime;
+                    SD_saveSetting();
+                }
+            }
+            
+            //迁移至gameover画面
+            nowMode = MODE_GAMEOVER;
             break;
         default:
             break;
@@ -412,10 +504,10 @@ void powerKey(u8 event_id){
 
 }
 
-void eventSnake(){
-    switch (SnakeEventId)
+void eventGame(){
+    switch (MineEventId)
     {
-    case SNAKE_EVENT_UPDATE_BLOCK:
+    case MINE_EVENT_UPDATE_BLOCK:
         // 只在游戏或者DEMO页响应这个事件（避免非游戏状态动态设置墙体时刷新画面）
         if (nowMode != MODE_GAME && nowMode != MODE_WELCOME_DEMO)
         {
@@ -423,150 +515,51 @@ void eventSnake(){
             //return;
         }
         
-        DISP_updateGameBlock(SnakeEventParam1, SnakeEventParam2);
+        DISP_updateGameBlock(MineEventParam1, MineEventParam2);
         break;
-    #ifdef SNAKE_AI_DEBUG
-    case SNAKE_EVENT_UPDATE_AI_PATH:
-        if (SNAKE_getNowScroe() >= 5)
-        {
-            updateBlockAI(SnakeEventParam1, SnakeEventParam2);
-        }
-        break;
-    #endif
-    case SNAKE_EVENT_RESTART:
-        // 如果需要用到障碍物功能，必须在这个事件点中设置。且不可使用左上角1X3的位置。（预留给初始蛇身体用）
-        // 处理顺序如下
-        // 1-Snake模块的restart函数中首先将map全部清除,包括障碍物。
-        // 2-Snake模块回调此事件。
-        // 3-在此事件中根据需要添加障碍物。（开发者实现）
-        // 4-Snake模块在左上角生成1X3大小的蛇的身体。空地随机生成第一个食物。游戏开始。
-        // 所以，早了会在1处被清除。晚了有可能跟在4处随机生成的食物位置冲突。你并不知道食物在哪里，所以要在随机生成食物之前，Map清除之后添加障碍物。
+    case MINE_EVENT_RESTART:
         if (nowMode == MODE_WELCOME_DEMO){
-            // 设置Demo画面的障碍物
-            resetDemoWall();
-            DISP_drawWall();
-            setDemoSpeed(lastDemoSpeed);
+            // DO NOTHING
         } else {
-            nowSpeed = SPEED_DEFAULT;
+            //TODO:
         }
         break;
-    case SNAKE_EVENT_GAMEOVER:
+    case MINE_EVENT_GAMEOVER:
 
         if (nowMode == MODE_GAME)
-        {
-            if (gSetting.soundOnOff)
-            {
-                devPlaySound(SOUND_GAMEOVER);
+        {   
+            // 参数1为是否胜利 暂时没用 可用来显示胜利失败什么的
+            isWin = MineEventParam1;
+            if(isWin == FALSE){
+                // 游戏失败，踩到雷了，让LED爆闪一下
+                LED_ALL_ON();
+                delay_ms(30);
+                LED_ALL_OFF();
             }
-
-            //先停一会死掉的状态(TODO:GBA 这里会影响死掉时候的maxmod声音播放？？)
-            //TODO:这里不要用延时，改成订阅等待帧数的方式，等帧数到达指定数字之后执行回调函数。
-            My_delay_ms(2000);
-
-            devEnterGameOverPage();
-
-            lastGameScore = SnakeEventParam1;
-            oldSaveDataHScore = gSetting.hiScore;
-            DISP_drawGameOver(lastGameScore, oldSaveDataHScore);
-
-            //如果得分超过了最高分则更新最高分并保存
-            if (lastGameScore > gSetting.hiScore)
-            {
-                gSetting.hiScore = lastGameScore;
-                SD_saveSetting();
-            }
-
-            nowMode = MODE_GAMEOVER;
+            // 跳转到游戏结束前状态（画面不迁移，便于观察游戏结果）
+            nowMode = MODE_BEFROE_GAMEOVER;
+            // 停止计时
+            isPlaying = FALSE;
         } else if (nowMode == MODE_WELCOME_DEMO) {
-            lastDemoScore = SnakeEventParam1;
-
-            // 平均得分 TODO: 计算有问题，每次只跟上一次做平均数是不对的
-            totalDemoCnt++;
-            totalDemoScore += SnakeEventParam1;
-            avgDemoScore = totalDemoScore / totalDemoCnt;
-            
-            // 最高得分
-            if (SnakeEventParam1 > maxDemoScore)
-            {
-                maxDemoScore = SnakeEventParam1;
-            }
-
-            // 显示最高分，平均分等信息
-            DISP_updateDemoGameover(maxDemoScore, avgDemoScore, lastDemoScore);
-
-            #if !(ISDEBUG && DEBUG_DEMO_GAMEOVER_NOWAIT)
-                // 停一会
-                My_delay_ms(3000);
-            #endif
-            
-            // 回到欢迎页
-            goPageWelcome(DISP_NO);
+            // DO NOTHING
         }
         
         break;
-    case SNAKE_EVENT_EAT_APPLE:
-
-        if (gSetting.soundOnOff)
+    case MINE_EVENT_UPDATE_FLAG_CNT:
+        if (nowMode == MODE_GAME)
         {
-            // 播放声音
-            devPlaySound(SOUND_EAT_APPLE);
+            // 刷新剩余旗子数量
+            DISP_updateFlagCnt(MineEventParam1);
         }
-        
-        if (nowMode == MODE_WELCOME_DEMO)
-        {
-            // 刷新分数
-            DISP_updateDemoScore(maxDemoScore, SnakeEventParam1);
-        } else {
-            // 刷新分数
-            DISP_updateGameScore(maxDemoScore, SnakeEventParam1);
-
-            // 手动游戏才改变速度
-            nowSpeed -= SPEED_INTERVAL;
-            if (nowSpeed <= SPEED_MAX) 
-            {
-                // 设置速度上限
-                nowSpeed = SPEED_MAX;
-            }
-        }
-        
+        break;
+    case MINE_EVENT_TIMESTART:
+        // 开始计时
+        isPlaying = TRUE;
         break;
     default:
         break;
     }
 }
-
-#ifdef SNAKE_AI_DEBUG
-void updateBlockAI(u8 x, u8 y){
-    switch (snake_getPointDataAI(x, y).subDatas.status)
-    {
-    case AI_STATUS_ON_THE_WAY:
-        //OLED_ShowChar(x*8,y,'O',8);
-        break;
-    case AI_STATUS_WAY_TO_DEATH:
-        //OLED_ShowChar(x*8,y,'X',8);
-        break;
-    case AI_STATUS_WAY_TO_APPLE:
-        OLED_ShowChar(x*8,y,'.',8);
-        break;
-    default:
-        break;
-    }
-}
-
-void updateAllAI(){
-    u8 x,y;
-	for (x = 0; x < SNAKE_SIZE_X; ++x)
-	{
-		for (y = 0; y < SNAKE_SIZE_Y; ++y)
-		{
-            if (SNAKE_getMapData(x,y) == STS_EMPTY)
-            {
-                OLED_ShowChar(x*8,y,' ',8);
-            }
-		}
-	}
-}
-#endif
 
 void goPageWelcome(u8 isStartup) {
     ttWalk = 0;
@@ -581,12 +574,6 @@ void goPageWelcome(u8 isStartup) {
     LOG("---- 显示标题画面 end\r\n");
 
     nowMode = MODE_WELCOME;
-}
-
-void setDemoSpeed(u16 speed){
-    nowSpeed = speed;
-    lastDemoSpeed = speed;
-    devSpeedChanged(speed);
 }
 
 void switchSound(){
@@ -604,101 +591,28 @@ void switchSound(){
     SD_saveSetting();
 }
 
-void resetDemoWall(){
-    // 清除当前障碍物
-    SNAKE_clearWall();
-
-    //「演示模式」所在区域设置为障碍物
-    SNAKE_addWall(SNAKE_DEMO_TITLE_1_X,   SNAKE_DEMO_TITLE_1_Y);
-    SNAKE_addWall(SNAKE_DEMO_TITLE_1_X+1, SNAKE_DEMO_TITLE_1_Y);
-    SNAKE_addWall(SNAKE_DEMO_TITLE_1_X,   SNAKE_DEMO_TITLE_1_Y+1);
-    SNAKE_addWall(SNAKE_DEMO_TITLE_1_X+1, SNAKE_DEMO_TITLE_1_Y+1);
-
-    SNAKE_addWall(SNAKE_DEMO_TITLE_2_X,   SNAKE_DEMO_TITLE_2_Y);
-    SNAKE_addWall(SNAKE_DEMO_TITLE_2_X+1, SNAKE_DEMO_TITLE_2_Y);
-    SNAKE_addWall(SNAKE_DEMO_TITLE_2_X,   SNAKE_DEMO_TITLE_2_Y+1);
-    SNAKE_addWall(SNAKE_DEMO_TITLE_2_X+1, SNAKE_DEMO_TITLE_2_Y+1);
-
-    SNAKE_addWall(SNAKE_DEMO_TITLE_3_X,   SNAKE_DEMO_TITLE_3_Y);
-    SNAKE_addWall(SNAKE_DEMO_TITLE_3_X+1, SNAKE_DEMO_TITLE_3_Y);
-    SNAKE_addWall(SNAKE_DEMO_TITLE_3_X,   SNAKE_DEMO_TITLE_3_Y+1);
-    SNAKE_addWall(SNAKE_DEMO_TITLE_3_X+1, SNAKE_DEMO_TITLE_3_Y+1);
-
-    SNAKE_addWall(SNAKE_DEMO_TITLE_4_X,   SNAKE_DEMO_TITLE_4_Y);
-    SNAKE_addWall(SNAKE_DEMO_TITLE_4_X+1, SNAKE_DEMO_TITLE_4_Y);
-    SNAKE_addWall(SNAKE_DEMO_TITLE_4_X,   SNAKE_DEMO_TITLE_4_Y+1);
-    SNAKE_addWall(SNAKE_DEMO_TITLE_4_X+1, SNAKE_DEMO_TITLE_4_Y+1);
-}
-
 void CTL_init() {
 
     u8 x, y, sdCheck;
     
     // 读取配置，防止首次读取失败先设置好默认值供设备初次保存
-    gSetting.hiScore         = 0;                    //最高分=0
+    gSetting.hiScoreLvl1     = 5999;                 //最高分=99:59(因为扫雷用的是时间所以默认记录设置一个很大的数) 5999=99分59秒
+    gSetting.hiScoreLvl2     = 5999;                 //最高分=99:59(因为扫雷用的是时间所以默认记录设置一个很大的数)
+    gSetting.hiScoreLvl3     = 5999;                 //最高分=99:59(因为扫雷用的是时间所以默认记录设置一个很大的数)
     gSetting.soundOnOff      = 1;                    //开启声音
     gSetting.colorBackGround = COLOR_DEFAULT_BACK;   //默认背景色
     gSetting.colorFront      = COLOR_DEFAULT_FRONT;  //默认文字色
-    gSetting.colorSnake      = COLOR_DEFAULT_SNAKE;  //默认蛇的颜色
-    gSetting.colorApple      = COLOR_DEFAULT_APPLE;  //默认食物颜色
     gSetting.colorFrame      = COLOR_DEFAULT_FRAME;  //默认框架颜色
     SD_loadSetting();
 
-    // 上电默认demo速度（这个不做保存，没啥意义）
-    lastDemoSpeed = SPEED_DEMO_H;
-
     DISP_setBackColor(gSetting.colorBackGround);
     DISP_setForeColor(gSetting.colorFront);
-    DISP_setSnakeColor(gSetting.colorSnake);
-    DISP_setAppleColor(gSetting.colorApple);
     DISP_setFrameColor(gSetting.colorFrame);
 
     DISP_init();
     devSndInit();
     KEY_init(eventKey1, eventKey2, eventKey3, eventKey4, eventKey5, eventKey6, eventKey7, eventKey8, eventKey9, powerKey);
-    SNAKE_init(eventSnake);
-    
-    #if ISDEBUG
-        LOG("========== MAP DATA (before load Wallmap) START ==========\r\n");
-        for (y = 0; y < SNAKE_SIZE_Y; ++y)
-        {
-            for (x = 0; x < SNAKE_SIZE_X; ++x)
-            {   // x= 0,y= 1,idx= 2,offset= 0
-                sprintf(buff, 
-                    "x=%b2d,y=%b2d,idx=%b2d,offset=%b2d,mapSts=%b2d,isWall=%b2d\r\n", 
-                    x, y,
-                    (SNAKE_SIZE_X/8)*y+(x/8), 
-                    x%8,
-                    SNAKE_getMapData(x, y),
-                    ((WALLMAP_1[(SNAKE_SIZE_X/8)*y+(x/8)]<<(x%8)) & 0x80));
-                LOG(buff);
-            }
-        }
-        LOG("========== MAP DATA (before load Wallmap) END ==========\r\n");
-    #endif
-
-    LOG("---- SNAKE_loadWall start\r\n");
-    // SNAKE_loadWall(WALLMAP_1);
-    LOG("---- SNAKE_loadWall end\r\n");
-
-    #if ISDEBUG
-        LOG("========== MAP DATA (After load Wallmap) START ==========\r\n");
-        for (y = 0; y < SNAKE_SIZE_Y; ++y)
-        {
-            for (x = 0; x < SNAKE_SIZE_X; ++x)
-            {
-                sprintf(buff, 
-                    "x=%b2d,y=%b2d,sts=%b2d\r\n", 
-                    x, y, SNAKE_getMapData(x, y));
-                //sprintf(buff, "x=%b2d,y=%b2d,idx=%b2d,offset=%b2d\r\n", x, y, 5, x%8);
-                LOG(buff);
-                // if(map[x][y] == STS_EMPTY && ((wallMap[(SNAKE_SIZE_X/8)*y+(x/8)]<<(x%8)) & 0x80) ) {
-                //     updateMap(x, y, STS_WALL);
-                // }
-            }
-        }
-        LOG("========== MAP DATA (After load Wallmap) END ==========\r\n");
-	#endif
+    MINE_init(eventGame);
 
     goPageWelcome(DISP_YES);
 

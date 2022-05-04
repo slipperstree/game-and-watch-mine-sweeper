@@ -76,7 +76,7 @@ Mine/Src/key.c \
 Mine/Src/saveData.c \
 Mine/Src/gw_draw.c \
 Mine/Src/display.c \
-#Mine/Src/control.c \
+Mine/Src/control.c \
 #Mine/Src/embMineDevice.c
 
 # ASM sources
