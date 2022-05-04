@@ -5,8 +5,8 @@
 #define COLOR_BPP16_RGB555
 
 typedef unsigned long       DWORD;
-typedef u8       BYTE;
-typedef u16        WORD;
+typedef unsigned char       BYTE;
+typedef unsigned int        WORD;
 typedef unsigned long       COLORREF;
 
 /* Win RGB */
@@ -37,7 +37,6 @@ typedef unsigned long       COLORREF;
 #define RGB888toRGB565(r, g, b) ((WORD)((((WORD)(r) << 8) & 0xF800) | ((((WORD)(g)) << 3) & 0x7E0) | (((WORD)(b)) >> 3)))
 #define RGBtoRGB565(rgb) ((WORD)(((((WORD)((rgb) >> 3)) & (0x1F)) << 11) | ((((WORD)((rgb) >> 10)) & (0x3F)) << 5) | (((WORD)((rgb) >> 19)) & 
 
-#define RGB888toBGR555(r, g, b) ((WORD)(((((WORD)(b)) << 7) & 0x7C00) | ((((WORD)(g)) << 2) & 0x3E0) | (((WORD)(r)) >> 3)))
 
 #define RGB888toRGB555(r, g, b) ((WORD)(((((WORD)(r)) << 7) & 0x7C00) | ((((WORD)(g)) << 2) & 0x3E0) | (((WORD)(b)) >> 3)))
 #define RGBtoRGB555(rgb) ((WORD)(((((WORD)((rgb) >> 3)) & (0x1F)) << 10) | ((((WORD)((rgb) >> 11)) & (0x1F)) << 5) | (((WORD)((rgb) >> 19)) & (0x1F))))
@@ -53,37 +52,9 @@ typedef unsigned long       COLORREF;
 #endif
 #endif
 
-// // 常用16位BGR555颜色(GBA 的颜色系统 15位色 红色在低位 所以是BGR555)
-// #define COLOR_RED          0x013f	  //红色
-// #define COLOR_GREEN        0x03e0	  //绿色
-// #define COLOR_GREENDK      RGB888toBGR555(10,100,0)
-// #define COLOR_GREENLT      0x1f36
-// #define COLOR_BLUE         0x1f	        //蓝色
-// #define COLOR_BLUELT       0x7daf	    //浅蓝色
-// #define COLOR_BLUEDK       0x2860	    //深蓝色
-// #define COLOR_YELLOW       0x3eff	    //黄色
-// #define COLOR_BLACK        0X0000	    //黑色
-// #define COLOR_WHITE        0x7fff	    //白色
-// #define COLOR_SKY          RGB888toBGR555(88,80,216)
-// #define COLOR_SKYLT        0x7f33
-// #define COLOR_BROWN        0x0bf1
-// #define COLOR_BROWNLT      0x3cff
-// #define COLOR_ORANGE       0x3d1f	    //橙色
-// #define COLOR_GRAY  	   0x4210       //灰色
-// #define COLOR_GRAYLT       0x6278	    //浅灰色
-// #define COLOR_GRAYDK       0x41f0	    //深灰色
-// #define COLOR_GRAYBLUE     0x696a       //灰蓝色
-// #define COLOR_GRAYBLUELT   0x56d4       //浅灰蓝色
-// #define COLOR_GRAYBLUEDK   0x3cc0 	    //深灰蓝色
-// #define COLOR_PORPO        0x7c10	    //紫色
-// #define COLOR_PINK         0x7f1f	    //粉红色
-// #define COLOR_WINLOGO_R    RGB888toBGR555(240,101,43)
-// #define COLOR_WINLOGO_G    RGB888toBGR555(140,189,0)
-// #define COLOR_WINLOGO_B    RGB888toBGR555(49,174,233)
-// #define COLOR_WINLOGO_Y    RGB888toBGR555(247,189,1)
-
-//常用16位RGB565颜色
+// 常用16位RGB565颜色
 #define COLOR_RED          0XF800	  //红色
+#define COLOR_REDLT        RGB888toRGB565(248,45,87) //淡红
 #define COLOR_GREEN        0X07E0	  //绿色
 #define COLOR_GREENDK      RGB888toRGB565(10,100,0)
 #define COLOR_GREENLT      0xb723
@@ -105,11 +76,32 @@ typedef unsigned long       COLORREF;
 #define COLOR_GRAYBLUELT   0XA651     //浅灰蓝色
 #define COLOR_GRAYBLUEDK   0X01CF	  //深灰蓝色
 #define COLOR_PORPO        0X801F	  //紫色
+#define COLOR_PORPOLT      RGB888toRGB565(200,83,255) //淡紫色
 #define COLOR_PINK         0XF81F	  //粉红色
 #define COLOR_WINLOGO_R    RGB888toRGB565(240,101,43)
 #define COLOR_WINLOGO_G    RGB888toRGB565(140,189,0)
 #define COLOR_WINLOGO_B    RGB888toRGB565(49,174,233)
 #define COLOR_WINLOGO_Y    RGB888toRGB565(247,189,1)
+
+// 扫雷网格线
+#define COLOR_MINE_BLOCK_LINE           RGB888toRGB565(169,169,169)
+// 按钮 未翻开左上高亮，右下阴影，中央凸起
+#define COLOR_MINE_BLOCK_BTN_LT         RGB888toRGB565(247,247,247)
+#define COLOR_MINE_BLOCK_BTN_RB         RGB888toRGB565(179,179,179)
+#define COLOR_MINE_BLOCK_BTN_CENTER     RGB888toRGB565(230,230,230)
+// 翻开后的底色
+#define COLOR_MINE_BLOCK_DIGED          RGB888toRGB565(204,204,204)
+// 数字颜色
+#define COLOR_MINE_BLOCK_NUM_1          RGB888toRGB565(5,50,255)
+#define COLOR_MINE_BLOCK_NUM_2          RGB888toRGB565(0,162,0)
+#define COLOR_MINE_BLOCK_NUM_3          RGB888toRGB565(255,39,2)
+#define COLOR_MINE_BLOCK_NUM_4          RGB888toRGB565(144,36,138)
+#define COLOR_MINE_BLOCK_NUM_5          RGB888toRGB565(255,127,36)
+#define COLOR_MINE_BLOCK_NUM_6          RGB888toRGB565(255,62,255)
+#define COLOR_MINE_BLOCK_NUM_7          RGB888toRGB565(38,190,217)
+#define COLOR_MINE_BLOCK_NUM_8          COLOR_BLACK
+
+
 
 
 
