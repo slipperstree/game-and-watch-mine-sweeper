@@ -165,7 +165,6 @@ void CTL_run(){
         case MODE_GAME:
             // 在没有锁定光标的时候，不停获取当前光标位置并绘制
             if(!lockCurFlg){
-                devUpdateCurPos();
                 if(gDevCurPosX != lastCurX || gDevCurPosY != lastCurY){
                     DISP_hideCusor(lastCurX, lastCurY);
                     DISP_showCusor(gDevCurPosX, gDevCurPosY);
@@ -308,7 +307,35 @@ void doBtnCommon(u8 btnNo, u8 event_id){
 
             switch (btnNo)
             {
+            case KEY_UP:
+                if (gDevCurPosY==0) {
+                    gDevCurPosY = MINE_SIZE_Y-1;
+                } else {
+                    gDevCurPosY--;
+                }
+                break;
+            case KEY_DOWN:
+                if (gDevCurPosY==(MINE_SIZE_Y-1)) {
+                    gDevCurPosY = 0;
+                } else {
+                    gDevCurPosY++;
+                }
+                break;
             case KEY_LEFT:
+                if (gDevCurPosX==0) {
+                    gDevCurPosX = MINE_SIZE_X-1;
+                } else {
+                    gDevCurPosX--;
+                }
+                break;
+            case KEY_RIGHT:
+                if (gDevCurPosX==(MINE_SIZE_X-1)) {
+                    gDevCurPosX = 0;
+                } else {
+                    gDevCurPosX++;
+                }
+                break;
+            case KEY_GAME:
                 // Game-按键1=锁定光标
                 lockCurFlg = 1;
                 DISP_drawLock();

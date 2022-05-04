@@ -120,9 +120,6 @@ void devScreenOFF();
 // 打开屏幕显示(跟函数devScreenOFF搭配使用，如无必要可不用实现留空即可，实现了更好，可以防止刷新画面的过程被用户看见)
 void devScreenON();
 
-// 更新当前光标位置（主循环会不停调用这个接口以刷新全局变量g_devCurPosX g_devCurPosY的数值用来绘制画面上的光标）
-void devUpdateCurPos();
-
 // 进入主画面时会调用这个函数，如有需要请实现想要的效果(比如关闭LED)
 void devEnterHomePage();
 // 进入Demo画面时会调用这个函数，如有需要请实现想要的效果
