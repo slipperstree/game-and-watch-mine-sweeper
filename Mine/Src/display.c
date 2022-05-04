@@ -5,71 +5,42 @@
 #include "font.h"
 #include "embMineDevice.h"
 
-// define start ------------------------------------------------------------------------------------------
-
 // 各种字符串定义，可自由修改
 // 屏幕较小的话要改短一些,大屏也不要太长,预留的缓冲区只有128字节,超出的话会发生未知问题
-#ifdef UI_LANG_EN
-    u8* STR_PRESS_ANY_KEY             = (u8*)"Press any btn";
-    u8* STR_DEMO_MENU                 = (u8*)"G:Play B:Speed Other:Home";
-    u8* STR_GAME_MENU                 = (u8*)"T:Auto";
-    u8* STR_GAMEOVER_GAMEOVER         = (u8*)"Game Over";
-    u8* STR_GAMEOVER_NEWRECORD        = (u8*)"New Record";
-    u8* STR_GAMEOVER_HSCORE           = (u8*)"Max   ";
-    u8* STR_GAMEOVER_SCORE            = (u8*)"Score ";
-    u8* STR_GAMEOVER_MORE             = (u8*)"Press PAUSE/SET for more info.";
-    u8* STR_GAMEOVER_INFO_EXIT        = (u8*)"EXIT : Press any button";
+u8* STR_PRESS_ANY_KEY             = (u8*)"  按任意键继续..";
+u8* STR_DEMO_MENU                 = (u8*)"壹速度 貳声音 叁返回";  //壹貳叁代表按钮①②③图标 //Demo未使用
+u8* STR_LEVEL_SEL                 = (u8*)"壹简单 貳普通 叁困难";
 
-    // 底部信息栏字体
-    #define FONT_BOTTOM_INFO          FONT_ASC12
-    // 其他文字的字体，比如GameOver，按任意键继续
-    #define FONT_OTHER_TEXT           FONT32
-    // 顶部信息栏字体
-    //   注意，程序会从整个画面最下房往上依次计算各区域的高度并绘制框架，而游戏主区域的高度是根据snake map size计算得出的，
-    //        要保证剩余的高度足够显示顶部指定字体
-    #define FONT_TOP_INFO             FONT_ASC16
-    
-#endif
-#ifdef UI_LANG_CN
-    u8* STR_PRESS_ANY_KEY             = (u8*)"  按任意键继续..";
-    u8* STR_DEMO_MENU                 = (u8*)"B:Speed P:Sound Other:Home";
-    u8* STR_GAME_MENU                 = (u8*)"P:Sound";
-    u8* STR_GAMEOVER_GAMEOVER         = (u8*)"游戏结束";
-    u8* STR_GAMEOVER_NEWRECORD        = (u8*)"恭喜,刷新记录!";
-    u8* STR_GAMEOVER_HSCORE           = (u8*)"记录:";
-    u8* STR_GAMEOVER_SCORE            = (u8*)"得分:";
-    u8* STR_GAMEOVER_MORE             = (u8*)"Press PAUSE/SET for more info";
+u8* STR_GAME_MENU1_LOCK           = (u8*)"壹锁";
+u8* STR_GAME_MENU1_UNLOCK         = (u8*)"壹解";
+u8* STR_GAME_MENU2                = (u8*)"貳旗";
+u8* STR_GAME_MENU3                = (u8*)"叁挖";
 
-    // 底部信息栏字体
-    #define FONT_BOTTOM_INFO          FONT_ASC12
-    // 其他文字的字体，比如GameOver，按任意键继续
-    #define FONT_OTHER_TEXT           FONT32
-    // 顶部信息栏字体
-    #define FONT_TOP_INFO             FONT_ASC20
-    
-#endif
+u8* STR_GAMEOVER_GAMEOVER         = (u8*)"游戏结束";
+u8* STR_GAMEOVER_NEWRECORD        = (u8*)"恭喜,刷新记录!";
+u8* STR_GAMEOVER_HSCORE           = (u8*)"记录:";
+u8* STR_GAMEOVER_SCORE            = (u8*)"用时:";
 
-u8* STR_GAME_INFO                     = (u8*)"Snake & Watch";
+// 右侧信息栏元素位置
+#define FRAME_RIGHT_INFO_WIDTH  75
+#define TIME_X          250
+#define TIME_Y           60
+#define FLAG_X          248
+#define FLAG_Y           10
+#define MENU_X          250
+#define MENU_LOCK_Y     130
+#define MENU_FLAG_Y    165
+#define MENU_CLICK_Y    200
 
-// Gameover page
-#define  TITLE_Y         15
-#define  SCROE_Y         80
-#define HSCROE_Y        120
-
-// define end ------------------------------------------------------------------------------------------
+// 框架厚度（drawFrame中计算并设置）
+u8 frameThickness=1;
 
 // 游戏区域左上角坐标Y偏移(也就是框架厚度)
-u16 gameArea_X_offset=0;
+u16 GAME_AREA_X_OFFSET=1;
+
 // 游戏区域左上角坐标Y偏移（drawFrame中计算并设置）(去掉顶部框架和顶部信息区域以及上方横栏高度(也就是框架厚度))
-u16 gameArea_Y_offset=0;
-// 游戏区域上方横栏位置Y（drawFrame中计算并设置）
-u16 barTopY=0;
-// 游戏界面底部信息栏高度（drawFrame中计算并设置）
-u16 barBottomY=0;
-// 游戏区域上方信息区域文字位置（drawFrame中计算并设置）
-u8 topInfoY=0;
-// 游戏区域上方信息区域食物图标位置（drawFrame中计算并设置）
-u8 topFoodIconY=0;
+u16 GAME_AREA_Y_OFFSET=0;
+
 // 临时变量用(sprintf等),需要修改size的话请一并修改common.c中的同名变量,这里只是声明
 extern u8 buff[128];
 
@@ -77,14 +48,14 @@ extern u8 buff[128];
 u16 _ColorBack=0x0000, _ColorFore=0x0000;
 #define COLOR_BG       _ColorBack
 #define COLOR_FO       _ColorFore
-u16 _ColorSnake=0x0000, _ColorApple=0x0000, _ColorFrame=0x0000;
-#define COLOR_SNAKE    _ColorSnake
-#define COLOR_APPLE    _ColorApple
+u16 _ColorFrame=0x0000;
 #define COLOR_FRAME    _ColorFrame
 
 // 函数声明
 void clearScreen(void);     // 清屏
 Font_Type* showChar(u16 x, u16 y, u8 *chr, Font_Type *font, u16 colorBg, u16 colorFont);
+void showStringMutiColor(u16 x, u16 y, u8 *str, Font_Type *font, u8 isClear, u16 colorBg, u8 colorCnt, u16 color1, u16 color2, u16 color3, u16 color4, u16 color5, u16 color6, u16 color7);
+Font_Type* showMutiBitImg(u16 x, u16 y, u8 *chr, Font_Type *font, u16 color1, u16 color2, u16 color3, u16 color4, u16 color5, u16 color6, u16 color7);
 
 // 获取随机颜色
 u16 randRGB565(){
@@ -144,11 +115,80 @@ u16 randRGB565(){
     return RGB888toRGB565(r, g, b);
 }
 
+u16 randRGB565DK(){
+    u8 r=0, g=0, b=0;
+
+    r = My_real_rand() % 10;
+    #define RAND_COLOR My_real_rand()%50+200
+    switch (r)
+    {
+    case 0:
+        r = 0;
+        g = RAND_COLOR;
+        b = RAND_COLOR;
+        break;
+    case 1:
+        r = RAND_COLOR;
+        g = 0;
+        b = RAND_COLOR;
+        break;
+    case 2:
+        r = RAND_COLOR;
+        g = RAND_COLOR;
+        b = 0;
+        break;
+    case 3:
+        r = RAND_COLOR;
+        g = 0;
+        b = 0;
+        break;
+    case 4:
+        r = 0;
+        g = RAND_COLOR;
+        b = 0;
+        break;
+    case 5:
+        r = 0;
+        g = 0;
+        b = RAND_COLOR;
+        break;
+    case 6:
+        r = RAND_COLOR;
+        g = RAND_COLOR;
+        b = RAND_COLOR;
+        break;
+    default:
+        r = My_real_rand();
+        g = My_real_rand();
+        b = My_real_rand();
+        while (r + g + b > 300)
+        {
+            r = My_real_rand();
+            g = My_real_rand();
+            b = My_real_rand();
+        }
+        break;
+    }
+    return RGB888toRGB565(r, g, b);
+}
+
 void clearScreen(void){
     devFillRectange(0,0,SCREEN_W,SCREEN_H,COLOR_BG);
 }
 
-void devShowString(u16 x,u16 y, u8 *str,Font_Type *fontType, u16 colorBg, u16 colorFont)
+void DISP_drawAllMap(){
+    u8 x,y;
+
+    for (y = 0; y < MINE_SIZE_Y; y++)
+    {
+        for (x = 0; x < MINE_SIZE_X; x++)
+        {
+            DISP_updateGameBlock(x,y);
+        }
+    }
+}
+
+void showString(u16 x,u16 y, u8 *str,Font_Type *fontType, u16 colorBg, u16 colorFont)
 {
 	u8 j=0;
     u8 charWidth;
@@ -174,19 +214,6 @@ void devShowString(u16 x,u16 y, u8 *str,Font_Type *fontType, u16 colorBg, u16 co
 	}
 }
 
-void DISP_drawWall(){
-    u8 x,y;
-    for (x = 0; x < SNAKE_SIZE_X; ++x)
-    {
-        for (y = 0; y < SNAKE_SIZE_Y; ++y)
-        {
-            if (SNAKE_getView(x, y) == SNAKE_VIEW_WALL){
-                DISP_updateGameBlock(x, y);
-            }
-        }
-    }
-}
-
 // 局部刷新函数，根据传入的游戏MAP指定位置，在画面上相应的区域进行重绘
 // x,y : 游戏MAP坐标
 // 
@@ -195,135 +222,105 @@ void DISP_drawWall(){
 // 所以，由于想刷新的区域所在的字节里也可能包含其他不应该被刷新的部分，
 // 从而也需要取到这部分不应该被刷新的部分的数据，再加上这次真正想刷新的数据的部分，才能进行刷新，否则原来的数据就丢失了
 void DISP_updateGameBlock(u8 x, u8 y){
-    u8 blockSts, blockView;
+    u8 blockView;
     u8 shiwei, gewei;
     u16 startX, startY;
     u8 width, height;
+    u16 numColor;
 
-    blockSts = SNAKE_getMapData(x, y);
-    blockView = SNAKE_getView(x, y);
+    // 周围雷数
+    u8 blockViewNum = MINE_getViewNum(x, y);
+
+    blockView = MINE_getView(x, y);
 
     // 简单绘制方块 -------------------------------------------
-    
-    // #define BLOCK_PIC_SIZE 10
-    // startX = x * BLOCK_PIC_SIZE + 1;
-    // startY = y * BLOCK_PIC_SIZE + 1;
-    // width = BLOCK_PIC_SIZE-2;
-    // height = BLOCK_PIC_SIZE-2;
-    // if (blockSts == STS_EMPTY) {
-    //     devFillRectange(x * BLOCK_PIC_SIZE, y * BLOCK_PIC_SIZE, BLOCK_PIC_SIZE, BLOCK_PIC_SIZE, COLOR_BLACK);
-    // } else if(blockSts == STS_APPLE) {
-    //     //ILI9163LCD(pPIC[column - blockStartColumn],OLED_DATA);
-    //     devFillRectange(startX, startY, width, height, 0x001f);
-    // } else if(blockSts / 10 == STS_HEAD / 10) {
-    //     devFillRectange(x * BLOCK_PIC_SIZE, y * BLOCK_PIC_SIZE, BLOCK_PIC_SIZE, BLOCK_PIC_SIZE, 0x07e0);
-    // } else {
-    //     devFillRectange(x * BLOCK_PIC_SIZE, y * BLOCK_PIC_SIZE, BLOCK_PIC_SIZE, BLOCK_PIC_SIZE, COLOR_BLACK);
-    //     devFillRectange(startX, startY, width, height, COLOR_WHITE);
-    // }
 
     // 用位图字体绘制
     width = BLOCK_VIEW_FONT.fontWidth;
     height = BLOCK_VIEW_FONT.fontHeight;
 
     // 绘图开始坐标，原始坐标加上偏移坐标（游戏区域开始位置，在drawFrame函数中计算并设置）
-    startX = x * width + gameArea_X_offset;
-    startY = y * height + gameArea_Y_offset;
+    startX = x * width + GAME_AREA_X_OFFSET;
+    startY = y * height + GAME_AREA_Y_OFFSET;
 
     #if ISDEBUG
-    sprintf(buff, "DISP_updateGameBlock 1 fontWidth=%b2d, fontHeight=%b2d\r\n", width, height);LOG(buff);
-    sprintf(buff, "DISP_updateGameBlock 2 x=%b2d, y=%b2d, blockSts=%b2d, view=%b2d, startX=%d, startY=%d\r\n",
-                     x, y, blockSts, blockView, startX, startY);LOG(buff);
+    //LOG("DISP_updateGameBlock 1 fontWidth=%b2d, fontHeight=%b2d\r\n", width, height);
     #endif
     
-    // 根据view绘图，各种view常量名里的「UDLR」代表与自己相邻部位方块所处的方向
-    // 比如HEAD_U表示是蛇头并且与蛇头相邻部位的蛇身在蛇头的上方，也就是需要绘制向下的蛇头（有点绕，但这样便于程序处理）
-    if (blockView == SNAKE_VIEW_APPLE)
+    // 根据view绘图
+    if (blockView == MINE_VIEW_NORMAL)
     {
-        // 食物
-        showChar(startX, startY, FONT_SNAKE_BLOCK_APPLE, &BLOCK_VIEW_FONT, COLOR_BG, COLOR_APPLE);
+        // 未翻开
+        showMutiBitImg(startX, startY, FONT_MINE_BLOCK_BG23_BTN, &FONT_IMG_2BIT_BLOCK_BG23, 
+                        COLOR_MINE_BLOCK_BTN_CENTER, COLOR_MINE_BLOCK_BTN_RB, COLOR_MINE_BLOCK_BTN_LT, COLOR_MINE_BLOCK_LINE,0,0,0);
     }
-    else if (blockView == SNAKE_VIEW_HEAD_U) {
-        // 蛇头向下
-        showChar(startX, startY, FONT_SNAKE_BLOCK_HEAD_U, &BLOCK_VIEW_FONT, COLOR_BG, COLOR_SNAKE);
+    else if (blockView == MINE_VIEW_DIGED)
+    {
+        // 已翻开
+        //devFillRectange(startX+1, startY+1, 22, 22, COLOR_MINE_BLOCK_DIGED);
+        showMutiBitImg(startX, startY, FONT_MINE_BLOCK_BG23_DIGED, &FONT_IMG_2BIT_BLOCK_BG23, 
+                        COLOR_MINE_BLOCK_DIGED, COLOR_MINE_BLOCK_DIGED, COLOR_MINE_BLOCK_DIGED, COLOR_MINE_BLOCK_LINE,0,0,0);
+        if (blockViewNum != 0)
+        {
+            switch (blockViewNum)
+            {
+            case 1:
+                numColor = COLOR_MINE_BLOCK_NUM_1;
+                break;
+            case 2:
+                numColor = COLOR_MINE_BLOCK_NUM_2;
+                break;
+            case 3:
+                numColor = COLOR_MINE_BLOCK_NUM_3;
+                break;
+            case 4:
+                numColor = COLOR_MINE_BLOCK_NUM_4;
+                break;
+            case 5:
+                numColor = COLOR_MINE_BLOCK_NUM_5;
+                break;
+            case 6:
+                numColor = COLOR_MINE_BLOCK_NUM_6;
+                break;
+            case 7:
+                numColor = COLOR_MINE_BLOCK_NUM_7;
+                break;
+            case 8:
+                numColor = COLOR_MINE_BLOCK_NUM_8;
+                break;
+            default:
+                numColor = COLOR_MINE_BLOCK_NUM_8;
+                break;
+            }
+            // 画数字(数字正好对应数组中的位置)
+            showMutiBitImg(startX+1, startY+1, (u8 *)blockViewNum, &FONT_IMG_2BIT_BLOCK_MINE_AND_NUMS22, 
+                        numColor, COLOR_MINE_BLOCK_DIGED, 0, 0,0,0,0);
+        }
     }
-    else if (blockView == SNAKE_VIEW_HEAD_D) {
-        // 蛇头向上
-        showChar(startX, startY, FONT_SNAKE_BLOCK_HEAD_D, &BLOCK_VIEW_FONT, COLOR_BG, COLOR_SNAKE);
+    else if (blockView == MINE_VIEW_FLAG)
+    {
+        // 插旗
+        showMutiBitImg(startX + 4, startY + 4, FONT_MINE_BLOCK_FLAG16, &FONT_IMG_2BIT_BLOCK_FLAG16, 
+                        COLOR_MINE_BLOCK_BTN_CENTER, COLOR_RED, 0, COLOR_BLACK,0,0,0);
     }
-    else if (blockView == SNAKE_VIEW_HEAD_L) {
-        // 蛇头向左
-        showChar(startX, startY, FONT_SNAKE_BLOCK_HEAD_L, &BLOCK_VIEW_FONT, COLOR_BG, COLOR_SNAKE);
+    else if (blockView == MINE_VIEW_MINE)
+    {
+        // 挖到雷时，显示其他未插旗的雷
+        showMutiBitImg(startX+1, startY+1, FONT_MINE_BLOCK_MINE, &FONT_IMG_2BIT_BLOCK_MINE_AND_NUMS22, 
+                        COLOR_WHITE, COLOR_MINE_BLOCK_DIGED, 0, COLOR_BLACK,0,0,0);
     }
-    else if (blockView == SNAKE_VIEW_HEAD_R) {
-        // 蛇头向右
-        showChar(startX, startY, FONT_SNAKE_BLOCK_HEAD_R, &BLOCK_VIEW_FONT, COLOR_BG, COLOR_SNAKE);
+    else if (blockView == MINE_VIEW_DEADMINE)
+    {
+        // 挖到雷时，显示爆炸的雷
+        showMutiBitImg(startX+1, startY+1, FONT_MINE_BLOCK_MINE, &FONT_IMG_2BIT_BLOCK_MINE_AND_NUMS22, 
+                        COLOR_WHITE, COLOR_RED, 0, COLOR_BLACK,0,0,0);
     }
-    else if (blockView == SNAKE_VIEW_BODY_V) {
-        // 蛇身竖直
-        showChar(startX, startY, FONT_SNAKE_BLOCK_BODY_V, &BLOCK_VIEW_FONT, COLOR_BG, COLOR_SNAKE);
-    }
-    else if (blockView == SNAKE_VIEW_BODY_LU) {
-        // 蛇身左上弯曲 
-        showChar(startX, startY, FONT_SNAKE_BLOCK_BODY_LU, &BLOCK_VIEW_FONT, COLOR_BG, COLOR_SNAKE);
-    }
-    else if (blockView == SNAKE_VIEW_BODY_UR) {
-        // 蛇身右上弯曲
-        showChar(startX, startY, FONT_SNAKE_BLOCK_BODY_UR, &BLOCK_VIEW_FONT, COLOR_BG, COLOR_SNAKE);
-    }
-    else if (blockView == SNAKE_VIEW_BODY_LD) {
-        // 蛇身左下弯曲
-        showChar(startX, startY, FONT_SNAKE_BLOCK_BODY_LD, &BLOCK_VIEW_FONT, COLOR_BG, COLOR_SNAKE);
-    }
-    else if (blockView == SNAKE_VIEW_BODY_DR) {
-        // 蛇身右下弯曲
-        showChar(startX, startY, FONT_SNAKE_BLOCK_BODY_DR, &BLOCK_VIEW_FONT, COLOR_BG, COLOR_SNAKE);
-    }
-    else if (blockView == SNAKE_VIEW_BODY_H) {
-        // 蛇身水平
-        showChar(startX, startY, FONT_SNAKE_BLOCK_BODY_H, &BLOCK_VIEW_FONT, COLOR_BG, COLOR_SNAKE);
-    }
-    else if (blockView == SNAKE_VIEW_TAIL_U) {
-        // 蛇尾 尾尖朝下
-        showChar(startX, startY, FONT_SNAKE_BLOCK_TAIL_U, &BLOCK_VIEW_FONT, COLOR_BG, COLOR_SNAKE);
-    }
-    else if (blockView == SNAKE_VIEW_TAIL_D) {
-        // 蛇尾 尾尖朝上
-        showChar(startX, startY, FONT_SNAKE_BLOCK_TAIL_D, &BLOCK_VIEW_FONT, COLOR_BG, COLOR_SNAKE);
-    }
-    else if (blockView == SNAKE_VIEW_TAIL_L) {
-        // 蛇尾 尾尖朝右
-        showChar(startX, startY, FONT_SNAKE_BLOCK_TAIL_L, &BLOCK_VIEW_FONT, COLOR_BG, COLOR_SNAKE);
-    }
-    else if (blockView == SNAKE_VIEW_TAIL_R) {
-        // 蛇尾 尾尖朝左
-        showChar(startX, startY, FONT_SNAKE_BLOCK_TAIL_R, &BLOCK_VIEW_FONT, COLOR_BG, COLOR_SNAKE);
-    }
-    else if (blockView == SNAKE_VIEW_EMPTY) {
-        // 清空方块
-        devFillRectange(startX, startY, width, height, COLOR_BG);
-    }
-    else if (blockView == SNAKE_VIEW_WALL) {
-        // 障碍物 不要在这里画，这里只负责游戏中会动态变化的内容
-        //devFillRectange(startX, startY, width, height, COLOR_FO);
+    else if (blockView == MINE_VIEW_WRONG) {
+        // 挖到雷时，显示被并不是雷但被错插上旗子的地方
+        showMutiBitImg(startX+1, startY+1, FONT_MINE_BLOCK_MINE_WRONG, &FONT_IMG_2BIT_BLOCK_MINE_AND_NUMS22, 
+                        COLOR_WHITE, COLOR_MINE_BLOCK_DIGED, COLOR_RED, COLOR_BLACK,0,0,0);
     }
     else {
-        // TODO: 注意！当编译优化级别稍微调高的时候，下面这些无效代码如果不放开就会出现奇怪的现象，原因不明。
-        //       目前经过测试，将编译级别设置为0-6都正常，只要大于等于7就会出问题。
-        //       关于优化级别7的说明：扩展索引访问优化：适当时对寄存器变量用DPTR。对指针和数组访问进行执行速度和代码大小优化。
-        //       还是不知道为什么会影响这个逻辑？
-        //       参考 https://blog.csdn.net/tjcwt2011/article/details/94347250
-        //       
-        // shiwei = blockSts / 10*10;
-        
-        // switch (shiwei)
-        // {
-        // case STS_EMPTY:
-        //     //devFillRectange(startX, startY, width, height, COLOR_BG);
-        //     break;
-        // default:
-        //     break;
-        // }
     }
 }
 
@@ -333,7 +330,7 @@ u16 calcStringWidth(u8 *str, Font_Type *fontType){
     u16 width=0, asciiWidth=0, hzWidth=0;
 
     #if ISDEBUG
-    //sprintf(buff, "calcStringWidth: str=%s\r\n", str); LOG(buff);
+    //LOG("calcStringWidth: str=%s\r\n", str);
     #endif
 
     if (fontType->type == FONT_TYPE_HZ) {
@@ -358,20 +355,25 @@ u16 calcStringWidth(u8 *str, Font_Type *fontType){
     }
 
     #if ISDEBUG
-    //sprintf(buff, "calcStringWidth: width=%hd done.\r\n", width); LOG(buff);
+    //LOG("calcStringWidth: width=%hd done.\r\n", width);
     #endif
 
     return width;
 }
 
-Font_Type* showChar(u16 x, u16 y, u8 *chr, Font_Type *font, u16 colorBg, u16 colorFont){
-
+// 显示多颜色字体(最多7种颜色)
+Font_Type* showCharMutiColor(u16 x, u16 y, u8 *chr, Font_Type *font, u16 colorBg, 
+                            u8 oneBitMutiColorCnt, u16 color1, u16 color2, u16 color3, u16 color4, u16 color5, u16 color6, u16 color7){
     // 根据传入的chr和字体找到这个chr的fontData数组和其在数组中的偏移
     u8 nowRow=0,nowCol=0,fontWidth=0,fontHeight=0;
     u8 bytePerRow,bitIndex=0,charByteCnt=0;
     u16 charDataStartIndex=0;
     u8* fontData;
     u16 errSwitchColorTmp;
+    u8 bitPerPixel;
+    u8 bitIdxInPixel;
+    u8 bitsValue;
+    u16 nowColor;
     Font_Type *useFont = NULL;
 
     // 获取当前字符/汉字的偏移index 以及 实际使用的Font(例如给定的字体是汉字字库，但指定的字符是半角字符，那么实际使用的font就是汉字字库里外链的半角字库)
@@ -382,36 +384,143 @@ Font_Type* showChar(u16 x, u16 y, u8 *chr, Font_Type *font, u16 colorBg, u16 col
     fontWidth = useFont->fontWidth;
     // 点阵字体高度
     fontHeight = useFont->fontHeight;
-    // 每行在字体数组中占用几个字节
-    bytePerRow = (fontWidth-1)/8+1;
+    // 颜色位深
+    bitPerPixel = useFont->bitPerPixel;
+    // 每行在字体数组中占用几个字节(像素点数x位深)
+    bytePerRow = (fontWidth * bitPerPixel-1)/8+1;
 
     if(charDataStartIndex == FONT_ERR_NOT_FOUND){
         // 如果在字库中没找到这个字, 试图显示一个半角的X并反色显示提示错误
         charDataStartIndex = 'X'-' ';
         errSwitchColorTmp = colorBg;
-        colorBg = colorFont;
-        colorFont = errSwitchColorTmp;
+        colorBg = color1;
+        color1 = errSwitchColorTmp;
     }
 
 	devPrepareForDrawArea(x, y, fontWidth, fontHeight);
 
-	for(nowRow=0;nowRow<fontHeight;nowRow++){
-		for(nowCol=0;nowCol<fontWidth;nowCol++){
+    // 如果参数指定了单位多色个数 并且 使用的字体确实是1位色深的 那么使用传入的多个颜色在Y方向上均分显示
+    if (oneBitMutiColorCnt > 1 && bitPerPixel == 1)
+    {
+        // 多色文字
+        for(nowRow=0;nowRow<fontHeight;nowRow++){
+            if (oneBitMutiColorCnt > 6 && nowRow > (fontHeight/oneBitMutiColorCnt * 6)){
+                nowColor = color7;
+            } else if (oneBitMutiColorCnt > 5 && nowRow > (fontHeight/oneBitMutiColorCnt * 5)) {
+                nowColor = color6;
+            } else if (oneBitMutiColorCnt > 4 && nowRow > (fontHeight/oneBitMutiColorCnt * 4)) {
+                nowColor = color5;
+            } else if (oneBitMutiColorCnt > 3 && nowRow > (fontHeight/oneBitMutiColorCnt * 3)) {
+                nowColor = color4;
+            } else if (oneBitMutiColorCnt > 2 && nowRow > (fontHeight/oneBitMutiColorCnt * 2)) {
+                nowColor = color3;
+            } else if (oneBitMutiColorCnt > 1 && nowRow > (fontHeight/oneBitMutiColorCnt * 1)) {
+                nowColor = color2;
+            } else {
+                nowColor = color1;
+            }
 
-			// 根据行列位置确定当前应该使用哪个字节哪个位
-			bitIndex = nowCol%8;
+            for(nowCol=0;nowCol<fontWidth;nowCol++){
 
-			// 按位取点阵内容。1：绘制字体色，0：绘制背景色
-			if ((fontData[charDataStartIndex+(bytePerRow*nowRow) + nowCol/8] << bitIndex) & 0x80)
-			{
-				devPointInDrawArea(colorFont);
-			}else{
-				devPointInDrawArea(colorBg);
-			}
-		}
-	}
+                // 根据行列位置确定当前应该使用哪个字节哪个位
+                bitIndex = nowCol%8;
+
+                // 按位取点阵内容。1：绘制字体色，0：绘制背景色
+                if ((fontData[charDataStartIndex+(bytePerRow*nowRow) + nowCol/8] << bitIndex) & 0x80)
+                {
+                    devPointInDrawArea(nowColor);
+                }else{
+                    devPointInDrawArea(colorBg);
+                }
+            }
+        }
+        
+    } 
+    // 如果指定字体是多位色深的那么使用多位色深模式，此时无视参数oneBitMutiColorCnt
+    else if (bitPerPixel > 1) {
+        for(nowRow=0;nowRow<fontHeight;nowRow++){
+            for(nowCol=0;nowCol<fontWidth;nowCol++){
+
+                // 根据行列位置确定当前应该使用哪个字节哪个位
+                bitIndex = (nowCol*bitPerPixel)%8;
+
+                // 取得该像素对应的多位数据
+                bitsValue = 0;
+                for (bitIdxInPixel = 0; bitIdxInPixel < bitPerPixel; bitIdxInPixel++)
+                {
+                    if ((fontData[charDataStartIndex+(bytePerRow*nowRow) + (nowCol*bitPerPixel)/8] << (bitIndex+bitIdxInPixel)) & 0x80){
+                        bitsValue |= (0x01<<bitIdxInPixel);
+                    }
+                }
+
+                // LOG("nowCol=%b3u,dataIndex=%3d,bitsValue=%b2d, data=0x%b2x\r\n", 
+                //             nowCol,
+                //             charDataStartIndex+(bytePerRow*nowRow) + (nowCol*bitPerPixel)/8, 
+                //             bitsValue,
+                //             fontData[charDataStartIndex+(bytePerRow*nowRow) + (nowCol*bitPerPixel)/8]
+                //             );
+
+                // 根据多位数据绘制不同的颜色，比如2位深每个像素可能的取值有4种，分别对应 color1-color4 4种颜色
+                switch (bitsValue)
+                {
+                case 0:
+                    devPointInDrawArea(color1);
+                    break;
+                case 1:
+                    devPointInDrawArea(color2);
+                    break;
+                case 2:
+                    devPointInDrawArea(color3);
+                    break;
+                case 3:
+                    devPointInDrawArea(color4);
+                    break;
+                case 4:
+                    devPointInDrawArea(color5);
+                    break;
+                case 5:
+                    devPointInDrawArea(color6);
+                    break;
+                case 6:
+                    devPointInDrawArea(color7);
+                    break;
+                default:
+                    devPointInDrawArea(color1);
+                    break;
+                }
+            }
+        }
+    }
+    // 否则使用单色文字(使用color1)
+    else {
+        for(nowRow=0;nowRow<fontHeight;nowRow++){
+            for(nowCol=0;nowCol<fontWidth;nowCol++){
+
+                // 根据行列位置确定当前应该使用哪个字节哪个位
+                bitIndex = nowCol%8;
+
+                // 按位取点阵内容。1：绘制字体色，0：绘制背景色
+                if ((fontData[charDataStartIndex+(bytePerRow*nowRow) + nowCol/8] << bitIndex) & 0x80)
+                {
+                    devPointInDrawArea(color1);
+                }else{
+                    devPointInDrawArea(colorBg);
+                }
+            }
+        }
+    }
 
     return useFont;
+}
+
+Font_Type* showChar(u16 x, u16 y, u8 *chr, Font_Type *font, u16 colorBg, u16 colorFont){
+
+    return showCharMutiColor(x, y, chr, font, colorBg, 1, colorFont,0,0,0,0,0,0);
+}
+
+Font_Type* showMutiBitImg(u16 x, u16 y, u8 *chr, Font_Type *font, u16 color1, u16 color2, u16 color3, u16 color4, u16 color5, u16 color6, u16 color7){
+
+    return showCharMutiColor(x, y, chr, font, 0, 0, color1, color2, color3, color4, color5, color6, color7 );
 }
 
 //居中显示字符串,指定颜色
@@ -419,7 +528,7 @@ void showStringCenterColor(u16 y, u8 *str, Font_Type *fontType, u16 colorBg, u16
     u16 strWidth;
 
     #if ISDEBUG
-    //sprintf(buff, "showStringCenterColor: %s\r\n", str); LOG(buff);
+    //LOG("showStringCenterColor: %s\r\n", str);
     #endif
 
     strWidth = calcStringWidth(str, fontType);
@@ -428,11 +537,12 @@ void showStringCenterColor(u16 y, u8 *str, Font_Type *fontType, u16 colorBg, u16
     {
         devFillRectange((SCREEN_W - strWidth) / 2, y, strWidth, fontType->fontHeight, colorBg);
     } else {
-        devShowString((SCREEN_W - strWidth) / 2, y, str, fontType, colorBg, colorFo);
+        //showString((SCREEN_W - strWidth) / 2, y, str, fontType, colorBg, colorFo);
+        showStringMutiColor((SCREEN_W - strWidth) / 2, y, str, fontType, FALSE, colorBg, 1, colorFo,0,0,0,0,0,0);
     }
 
     #if ISDEBUG
-    //sprintf(buff, "showStringCenterColor: %s done.\r\n", str); LOG(buff);
+    //LOG("showStringCenterColor: %s done.\r\n", str);
     #endif
 }
 
@@ -441,13 +551,58 @@ void showStringCenter(u16 y, u8 *str, Font_Type *fontType, u8 isClear){
     showStringCenterColor(y, str, fontType, COLOR_BG, COLOR_FO, isClear);
 }
 
-//居中显示带阴影的字符串
-//TODO: 先绘制的阴影文字会被后绘制的本体的背景部分覆盖掉，想实现这个功能必须先取得当前像素点当前颜色，绘制本体非点阵部分时不要绘制前景色而是该点原来的颜色.效率较低暂时不做，
-void showStringCenterShadow(u16 y, u8 offsetX, u8 offsetY, u8 *str, Font_Type *fontType){
-    //先画阴影
-    devShowString((SCREEN_W - fontType->fontWidth * strlen(str)) / 2 + offsetX, y + offsetY, str, fontType, COLOR_BG, COLOR_RED);
-    //再画本体
-    showStringCenter(y, str, fontType, 0);
+// 显示多颜色字符串
+void showStringMutiColor(u16 x, u16 y, u8 *str, Font_Type *font, u8 isClear, u16 colorBg, 
+                            u8 colorCnt, u16 color1, u16 color2, u16 color3, u16 color4, u16 color5, u16 color6, u16 color7
+                            ){
+    u8 j=0;
+    u8 charWidth;
+    Font_Type *lastUseFont;
+    char* str1 = NULL;
+    u16 strWidth = calcStringWidth(str, font);
+
+    if (isClear)
+    {
+        devFillRectange(x, y, strWidth, font->fontHeight, colorBg);
+        return;
+    }
+
+	while (str[j]!='\0')
+	{
+        if (isClear)
+        {
+            lastUseFont = showCharMutiColor(x, y, &str[j], font, colorBg, 1, colorBg, colorBg, colorBg, colorBg, colorBg, colorBg, colorBg);
+        } else {
+            lastUseFont = showCharMutiColor(x, y, &str[j], font, colorBg, colorCnt, color1, color2, color3, color4, color5, color6, color7);
+        }
+
+        charWidth = lastUseFont->fontWidth;
+
+		// 每输出一个字符或汉字后，向后位移一个字符或汉字的宽度
+        x+= lastUseFont->fontWidth;
+        // 自动换行
+		if(x>SCREEN_W-font->fontWidth){
+            x=0;
+            y+=font->fontHeight;
+        }
+        // 继续显示下一个字符或汉字
+		j++;
+        // 如果是汉字那么需要向后移动两个字节
+        if (lastUseFont->type == FONT_TYPE_HZ) j++;
+	}
+}
+
+// 居中显示多颜色字符串（适用1位深字体）
+void showStringCenterMutiColor(u16 y, u8 *str, Font_Type *font, u8 isClear, u16 colorBg, 
+                            u8 colorCnt, u16 color1, u16 color2, u16 color3, u16 color4, u16 color5, u16 color6, u16 color7
+                            ){
+    u16 strWidth = calcStringWidth(str, font);
+    if (isClear)
+    {
+        devFillRectange((SCREEN_W - strWidth) / 2, y, strWidth, font->fontHeight, colorBg);
+    }else{
+        showStringMutiColor((SCREEN_W - strWidth) / 2, y, str, font, isClear, colorBg, colorCnt, color1, color2, color3, color4, color5, color6, color7);
+    }
 }
 
 void DISP_setBackColor(u16 color){
@@ -456,14 +611,6 @@ void DISP_setBackColor(u16 color){
 
 void DISP_setForeColor(u16 color){
     _ColorFore = color;
-}
-
-void DISP_setSnakeColor(u16 color){
-    _ColorSnake = color;
-}
-
-void DISP_setAppleColor(u16 color){
-    _ColorApple = color;
 }
 
 void DISP_setFrameColor(u16 color){
@@ -491,61 +638,43 @@ void DISP_drawWelcome(u8 isStartUp){
     #endif
 
     // 标题
-    #ifdef UI_LANG_CN
-        // 贪吃蛇
-        titleStartX = (SCREEN_W - FONT_TITLE.fontWidth * 4) / 2;
-        titleY = SCREEN_H/8;
-        showChar(titleStartX, titleY, "贪", &FONT_TITLE, COLOR_BG, COLOR_TITLE1);
-        showChar(titleStartX + FONT_TITLE.fontWidth + FONT_TITLE.fontWidth/2, titleY, "吃", &FONT_TITLE, COLOR_BG, COLOR_TITLE1);
-        showChar(titleStartX + FONT_TITLE.fontWidth*3, titleY, "蛇", &FONT_TITLE, COLOR_BG, COLOR_TITLE2);
-    #endif
-    #ifdef UI_LANG_EN
-        // SNAKE
-        titleStartX = (SCREEN_W - FONT_TITLE.fontWidth * 6) / 2;
-        titleY = SCREEN_H/8;
-        showChar(titleStartX, titleY, "贪", &FONT_TITLE, COLOR_BG, COLOR_TITLE1);
-        showChar(titleStartX+=(FONT_TITLE.fontWidth + FONT_TITLE.fontWidth/2), titleY, "吃", &FONT_TITLE, COLOR_BG, COLOR_TITLE2);
-        showChar(titleStartX+=(FONT_TITLE.fontWidth + FONT_TITLE.fontWidth/2), titleY, "蛇", &FONT_TITLE, COLOR_BG, COLOR_TITLE1);
-        showChar(titleStartX+=(FONT_TITLE.fontWidth + FONT_TITLE.fontWidth/2), titleY, "标", &FONT_TITLE, COLOR_BG, COLOR_TITLE2);
-        showChar(titleStartX+=(FONT_TITLE.fontWidth + FONT_TITLE.fontWidth/2), titleY, "题", &FONT_TITLE, COLOR_BG, COLOR_TITLE1);
-    #endif
+    titleY = SCREEN_H/6;
+    showStringCenterColor(titleY, 0, &FONTHZ_TITLE64, COLOR_BG, COLOR_YELLOW, 0);
+    devFillRectange(0, titleY, SCREEN_W, FONTHZ_TITLE64.fontHeight, COLOR_GRAYLT);
+    showMutiBitImg((SCREEN_W-FONTHZ_TITLE64.fontWidth) / 2, titleY, 0, &FONTHZ_TITLE64, COLOR_GRAYLT, COLOR_GRAYDK, COLOR_GRAYDK, COLOR_BLACK,0,0,0);
 
     devScreenON();
 
-    // LOGO
-    logoX = (SCREEN_W - FONT_LOGO70.fontWidth) / 2;
-    logoY = titleY + FONT_TITLE.fontHeight + FONT_LOGO70.fontHeight / 2;
+    // 学电LOGO
+    logoX = (SCREEN_W - FONTHZ_XD_LOGO40.fontWidth) / 2;
+    logoY = titleY + FONTHZ_TITLE64.fontHeight + FONTHZ_XD_LOGO40.fontHeight / 2;
+//TODO:Fortest
+//isStartUp = 0;
     if (isStartUp)
     {
-        My_delay_ms(1000);
-        // S&W LOGO缓缓出现的动画效果
-        while(1){
-            r+=1;
-            if (r>=150) {
-                showChar(logoX, logoY, FONT_LOGO_IDX_0, &FONT_LOGO70, RGB888toRGB565(150, 150, 150), COLOR_BG);
-                break;
-            } 
-            showChar(logoX, logoY, FONT_LOGO_IDX_0, &FONT_LOGO70, RGB888toRGB565(r, r, r), COLOR_BG);
-            My_delay_ms(350);
-        }
-        // 出现后等待一会儿
-        My_delay_ms(500);
-    } else {
-        // 非上电画面，快速显示
-        // S&W LOGO缓缓出现的动画效果
+        delay_ms(500);
+        // 学电LOGO缓缓出现的动画效果
         while(1){
             r+=5;
-            if (r>=150) {
-                showChar(logoX, logoY, FONT_LOGO_IDX_0, &FONT_LOGO70, RGB888toRGB565(150, 150, 150), COLOR_BG);
-                break;
-            } 
-            showChar(logoX, logoY, FONT_LOGO_IDX_0, &FONT_LOGO70, RGB888toRGB565(r, r, r), COLOR_BG);
-            My_delay_ms(200);
+            if (r>=256) break;
+            showChar(logoX, logoY, FONT_HZ_XD_LOGO, &FONTHZ_XD_LOGO40, RGB888toRGB565(r, 0, 0), COLOR_BG);
         }
         // 出现后等待一会儿
-        My_delay_ms(200);
+        Pre_Delay_ms(300);
+    } else {
+        // 非上电画面，快速显示
+        // 学电LOGO缓缓出现的动画效果
+        while(r<255){
+            r+=30;
+            if (r>=256) r = 255;
+            showChar(logoX, logoY, FONT_HZ_XD_LOGO, &FONTHZ_XD_LOGO40, RGB888toRGB565(r, 0, 0), COLOR_BG);
+        }
+        // 出现后等待一会儿
+        //Pre_Delay_ms(500);
     }
-    
+
+    // 难度选择
+    showStringCenter(logoY + FONTHZ_XD_LOGO40.fontHeight + FONTHZ_XD_LOGO40.fontHeight / 2, STR_LEVEL_SEL, &FONTHZ32, 0);
 }
 
 // ##### 首页 定期被调用
@@ -555,239 +684,242 @@ void DISP_flashWelcome(u8 flashOnOff){
     u8 tmp=0;
 
     #if ISDEBUG
-    sprintf(buff, "  DISP_flashWelcome 1: call showStringCenter(str=%s pStr=%ld)\r\n", STR_PRESS_ANY_KEY, &STR_PRESS_ANY_KEY); LOG(buff);
+    LOG("  DISP_flashWelcome 1: call showStringCenter(str=%s pStr=%ld)\r\n", STR_PRESS_ANY_KEY, &STR_PRESS_ANY_KEY);
     #endif
     
-    // S&W LOGO变幻颜色
-    logoX = (SCREEN_W - FONT_LOGO70.fontWidth) / 2;
-    logoY = SCREEN_H/8 + FONT_TITLE.fontHeight + FONT_LOGO70.fontHeight / 2;
-    //showChar(logoX, logoY, FONT_LOGO_IDX_0, &FONT_LOGO70, randRGB565(), COLOR_BG);
-
-    // 闪烁文字
-    #ifdef UI_LANG_EN
-        showStringCenter(logoY + FONT_LOGO70.fontHeight + 20, STR_PRESS_ANY_KEY, &FONT_OTHER_TEXT, flashOnOff);
-    #endif
-    #ifdef UI_LANG_CN
-        showStringCenter(logoY + FONT_LOGO70.fontHeight + 10, STR_PRESS_ANY_KEY, &FONT_OTHER_TEXT, flashOnOff);
-    #endif
-
-    // 标题 贪吃蛇 变幻颜色
-    // showChar(10, 20, "贪", &FONT_TITLE, COLOR_BG, randRGB565());
-    // showChar(50, 20, "吃", &FONT_TITLE, COLOR_BG, randRGB565());
-    // showChar(90, 20, "蛇", &FONT_TITLE, COLOR_BG, randRGB565());
+    // 学电LOGO变幻颜色
+    logoX = (SCREEN_W - FONTHZ_XD_LOGO40.fontWidth) / 2;
+    logoY = SCREEN_H/6 + FONTHZ_TITLE64.fontHeight + FONTHZ_XD_LOGO40.fontHeight / 2;
+    showChar(logoX, logoY, FONT_HZ_XD_LOGO, &FONTHZ_XD_LOGO40, randRGB565(), COLOR_BG);
 }
 
 // ##### Demo页 初始化时被调用一次
 void DISP_drawDemo(u8 soundOnOff){
-
-    #if ISDEBUG
-    sprintf(buff, "DISP_drawDemo\r\n"); LOG(buff);
-    #endif
-
-    devScreenOFF();
-
-    clearScreen();
-    DISP_drawFrame();
-
-    // 顶部信息
-    // 食物 = 0  (当前吃了多少个)
-    showChar(FRAME_THICKNESS + 10, topFoodIconY, FONT_SNAKE_BLOCK_APPLE, &BLOCK_VIEW_FONT, COLOR_BG, COLOR_FO);
-    devShowString(FRAME_THICKNESS + 10 + BLOCK_VIEW_FONT.fontWidth, topInfoY, " =  0", &FONT_TOP_INFO, COLOR_BG, COLOR_FO);
-    // 居右显示文字
-    devShowString(SCREEN_W - FRAME_THICKNESS - calcStringWidth(STR_GAME_INFO, &FONT_TOP_INFO) - 5, topInfoY, STR_GAME_INFO, &FONT_TOP_INFO, COLOR_BG, COLOR_FO);
-
-    // 游戏区域中央显示 演示模式 （显示区域需要设置为障碍物不让蛇通过）
-    showChar(SNAKE_DEMO_TITLE_1_X * 12  + gameArea_X_offset, 
-                SNAKE_DEMO_TITLE_1_Y * 12 + gameArea_Y_offset, 
-                FONT_DEMO_MODE_YAN, &FONT_DEMO_MOEDE24, COLOR_WINLOGO_R, COLOR_BG );
-    showChar(SNAKE_DEMO_TITLE_2_X * 12  + gameArea_X_offset, 
-                SNAKE_DEMO_TITLE_2_Y * 12 + gameArea_Y_offset, 
-                FONT_DEMO_MODE_SHI1,&FONT_DEMO_MOEDE24, COLOR_WINLOGO_G, COLOR_BG );
-    showChar(SNAKE_DEMO_TITLE_3_X * 12  + gameArea_X_offset, 
-                SNAKE_DEMO_TITLE_3_Y * 12 + gameArea_Y_offset, 
-                FONT_DEMO_MODE_MO,  &FONT_DEMO_MOEDE24, COLOR_WINLOGO_B, COLOR_BG );
-    showChar(SNAKE_DEMO_TITLE_4_X * 12  + gameArea_X_offset, 
-                SNAKE_DEMO_TITLE_4_Y * 12 + gameArea_Y_offset, 
-                FONT_DEMO_MODE_SHI2,&FONT_DEMO_MOEDE24, COLOR_WINLOGO_Y, COLOR_BG );
-
-    // 底部信息
-    showStringCenter(SCREEN_H - FONT_BOTTOM_INFO.fontHeight - FRAME_THICKNESS - 1, STR_DEMO_MENU, &FONT_BOTTOM_INFO, 0);
-
-    // 绘制声音状态
-    DISP_drawSound(soundOnOff);
-
-    devScreenON();
-
-    #if ISDEBUG
-    sprintf(buff, "DISP_drawDemo done.\r\n"); LOG(buff);
-    #endif
+    // NOTHING
 }
 
 // ##### Demo页 吃到食物时被调用一次，更新画面上的分数
 void DISP_updateDemoScore(u16 maxDemoScore, u16 nowDemoScore){
-    // 顶部信息栏更新分数
-    sprintf(buff, " =%3u", nowDemoScore);
-    devShowString(FRAME_THICKNESS + 10 + BLOCK_VIEW_FONT.fontWidth, topInfoY, buff, &FONT_TOP_INFO, COLOR_BG, COLOR_FO);
+    // DONOTHING
 }
 
 // ##### Demo页 死亡时被调用一次，可做一些显示处理，目前什么都没做
 void DISP_updateDemoGameover(u16 maxDemoScore, u16 avgDemoScore, u16 lastDemoScore){
-    //devShowString(0, SCREEN_H - FONT_OTHER_TEXT.fontHeight, "                ", &FONT_ASC8, COLOR_BG, COLOR_FO);
-    //sprintf(buff, "Max:%d Avg:%d", maxDemoScore, avgDemoScore, lastDemoScore);
-    //devShowString(0, SCREEN_H - FONT_OTHER_TEXT.fontHeight, buff, &FONT_OTHER_TEXT, COLOR_BG, COLOR_FO);
+    // DONOTHING
 }
 
 // ##### Demo页 定期被调用 目前没用到
 void DISP_flashDemo(u8 flashOnOff){
-    #if ISDEBUG
-    //sprintf(buff, "DISP_flashDemo: flashOnOff=%b2d ...\r\n", flashOnOff); LOG(buff);
-    #endif
-
-    
-
-    #if ISDEBUG
-    //sprintf(buff, "DISP_flashDemo: flashOnOff=%b2d done.\r\n", flashOnOff); LOG(buff);
-    #endif
+    // DONOTHING
 }
 
 // ##### Game页 初始化时被调用一次
-void DISP_drawGame(u8 soundOnOff){
+void DISP_drawGame(u8 soundOnOff, u8 flagCnt){
 
     #if ISDEBUG
-    sprintf(buff, "DISP_drawGame\r\n"); LOG(buff);
+    LOG("DISP_drawGame\r\n");
     #endif
-
-    devScreenOFF();
 
     clearScreen();
     DISP_drawFrame();
 
-    // 顶部信息
-    // 食物 = 0  (当前吃了多少个)
-    showChar(FRAME_THICKNESS + 10, topFoodIconY, FONT_SNAKE_BLOCK_APPLE, &BLOCK_VIEW_FONT, COLOR_BG, COLOR_FO);
-    devShowString(FRAME_THICKNESS + 10 + BLOCK_VIEW_FONT.fontWidth, topInfoY, " =  0", &FONT_TOP_INFO, COLOR_BG, COLOR_FO);
-    // 居右显示文字
-    devShowString(SCREEN_W - FRAME_THICKNESS - calcStringWidth(STR_GAME_INFO, &FONT_TOP_INFO) - 5, topInfoY, STR_GAME_INFO, &FONT_TOP_INFO, COLOR_BG, COLOR_FO);
+    // 绘制右侧信息栏
+    // 注意，这句计算必须放在DISP_drawFrame的后面。否则第一次计算时还未被设置正确的数值，为默认值1。
+    // 误以为1是正确的值调整后面的位置第一次是对的，第二次就全错了。
+    //topInfoY = frameThickness + 2;
 
-    // 底部信息
-    showStringCenter(SCREEN_H - FONT_BOTTOM_INFO.fontHeight - FRAME_THICKNESS - 1, STR_GAME_MENU, &FONT_BOTTOM_INFO, 0);
+    // 版权
+    showString(SCREEN_W - FRAME_RIGHT_INFO_WIDTH+3, 100, "Chen.L", &FONT20, COLOR_FO, COLOR_BG);
+
+    // 初始时间
+    DISP_updateTime(0);
+
+    // 初始旗子数
+    // 画旗子
+    devFillRectange(SCREEN_W - FRAME_RIGHT_INFO_WIDTH - frameThickness, frameThickness, FRAME_RIGHT_INFO_WIDTH, 45, COLOR_FO );
+    showChar(FLAG_X, FLAG_Y, "旗", &FONTHZ32, COLOR_FO, COLOR_BG);
+    DISP_updateFlagCnt(flagCnt);
+
+    // 菜单
+    DISP_drawUnLock();
+    DISP_drawSound(1);
+    showString(MENU_X, MENU_CLICK_Y, STR_GAME_MENU3, &FONTHZ32, COLOR_BG, COLOR_FO);
 
     // 绘制声音状态
     DISP_drawSound(soundOnOff);
 
-    devScreenON();
-
     #if ISDEBUG
-    sprintf(buff, "DISP_drawGame done.\r\n"); LOG(buff);
+    LOG("DISP_drawGame done.\r\n");
     #endif
 }
 
-// ##### Game页 吃到食物时被调用一次，更新画面上的分数
-void DISP_updateGameScore(u16 maxDemoScore, u16 nowDemoScore){
+// ##### Game页 更新画面上的时间
+void DISP_updateTime(u16 sec){
 
-    // 顶部信息栏更新分数
-    sprintf(buff, " =%3u", nowDemoScore);
-    devShowString(FRAME_THICKNESS + 10 + BLOCK_VIEW_FONT.fontWidth, topInfoY, buff, &FONT_TOP_INFO, COLOR_BG, COLOR_FO);
+    sprintf(buff, "%02d", sec / 60);
+    //sprintf(buff, "%b02d", 16);
+    showString(TIME_X-4, TIME_Y, buff, &FONT_DIGIT23, COLOR_BG, COLOR_RED);
+    sprintf(buff, "%s", ":");
+    showString(TIME_X+26, TIME_Y, buff, &FONT_DIGIT23, COLOR_BG, COLOR_RED);
+    sprintf(buff, "%02d", sec % 60);
+    //sprintf(buff, "%b02d", 27);
+    showString(TIME_X+32, TIME_Y, buff, &FONT_DIGIT23, COLOR_BG, COLOR_RED);
+}
+
+void DISP_updateFlagCnt(u8 flagCnt){
+
+    // 更新旗子个数
+    sprintf(buff, "%b02d", flagCnt);
+    showString(FLAG_X + 30, FLAG_Y + 5, buff, &FONT32, COLOR_FO, COLOR_BG);
+}
+
+// ##### BeforeGameOver页 定期被调用
+void DISP_flashBeforeGameOver(u8 flashOnOff, u8 isWin){
+    // 闪烁文字 按任意键继续
+    if (flashOnOff)
+    {
+        showString(MENU_X, MENU_LOCK_Y, "按任", &FONTHZ32, COLOR_BG, COLOR_FO);
+        showString(MENU_X, MENU_FLAG_Y, "意键", &FONTHZ32, COLOR_BG, COLOR_FO);
+        showString(MENU_X, MENU_CLICK_Y, "继续", &FONTHZ32, COLOR_BG, COLOR_FO);
+    } else {
+        devFillRectange(MENU_X, MENU_LOCK_Y, FONTHZ32.fontWidth * 2, MENU_CLICK_Y - MENU_LOCK_Y + FONTHZ32.fontHeight, COLOR_BG);
+    }
 }
 
 // ##### GameOver页 初始化时被调用一次
-void DISP_drawGameOver(u16 score, u16 hiScore){
-    u8 buff1[16];
+void DISP_drawGameOver(u8 isWin, u8* levelStr, u16 score, u16 hiScore){
+    u8 buff1[32];
     clearScreen();
 
-    //showStringCenter(5, "__________", &FONT_OTHER_TEXT, 0);
+    #define  TITLE_Y         35
+    #define  SCROE_Y         80
+    #define HSCROE_Y        120
+
+    //showStringCenter(5, "__________", &FONT32, 0);
 
     // 标题，如果超过最高分，显示 刷新记录 否则 显示游戏结束
-    if (score > hiScore)
+    devFillRectange(0, TITLE_Y, SCREEN_W, FONTHZ32.fontHeight, COLOR_FO);
+    if (isWin && score < hiScore)
     {
-        showStringCenter(TITLE_Y, STR_GAMEOVER_NEWRECORD, &FONT_OTHER_TEXT, 0);
+        sprintf(buff1, "%s-%s", STR_GAMEOVER_NEWRECORD, levelStr);
+        showStringCenterMutiColor(TITLE_Y, buff1, &FONTHZ32, 0, COLOR_FO, 
+            7, 
+            COLOR_RED, COLOR_RED, COLOR_REDLT, COLOR_REDLT, COLOR_ORANGE, COLOR_ORANGE, COLOR_YELLOW);
     } else {
-        showStringCenter(TITLE_Y, STR_GAMEOVER_GAMEOVER, &FONT_OTHER_TEXT, 0);
+        sprintf(buff1, "%s-%s", STR_GAMEOVER_GAMEOVER, levelStr);
+        showStringCenterColor(TITLE_Y, buff1, &FONTHZ32, COLOR_FO, COLOR_BLACK, 0);
     }
+    
 
     // 得分
-    sprintf(buff1, "%s %d", STR_GAMEOVER_SCORE, score);
-    showStringCenter(SCROE_Y, buff1, &FONT_OTHER_TEXT, 0);
+    if (isWin)
+    {
+        sprintf(buff1, "%s %02d:%02d", STR_GAMEOVER_SCORE, score/60, score%60);
+    } else {
+        // 没有得分
+        sprintf(buff1, "%s --:--", STR_GAMEOVER_SCORE);
+    }
+    showStringCenter(SCROE_Y, buff1, &FONTHZ32, 0);
+    
     // 记录
-    sprintf(buff1, "%s %d", STR_GAMEOVER_HSCORE, hiScore);
-    showStringCenter(HSCROE_Y, buff1, &FONT_OTHER_TEXT, 0);
+    sprintf(buff1, "%s %02d:%02d", STR_GAMEOVER_HSCORE, hiScore/60, hiScore%60);
+    showStringCenter(HSCROE_Y, buff1, &FONTHZ32, 0);
 
-    //showStringCenter(150, "__________", &FONT_OTHER_TEXT, 0);
-
-    // more info
-    showStringCenter(SCREEN_H - FONT_BOTTOM_INFO.fontHeight - 2, STR_GAMEOVER_MORE, &FONT_BOTTOM_INFO, 0);
+    showStringCenter(150, "__________", &FONT32, 0);
 }
 
 // ##### GameOver页 定期被调用
-void DISP_flashGameOver(u8 flashOnOff, u8 isNewRecord){
+void DISP_flashGameOver(u8 flashOnOff, u8 isNewRecord, u8* levelStr){
 
     if (isNewRecord)
     {
-        // 刷新记录动态效果
-        showStringCenterColor(TITLE_Y, STR_GAMEOVER_NEWRECORD, &FONT_OTHER_TEXT, COLOR_BG, randRGB565(), 0);
+        // // 刷新记录动态效果
+        // sprintf(buff, "%s-%s", STR_GAMEOVER_NEWRECORD, levelStr);
+        // showStringCenterColor(35, buff, &FONTHZ32, COLOR_FO, randRGB565DK(), 0);
     }
 
-    // 底部闪烁文字 按任意键继续...
-    showStringCenter(190, STR_PRESS_ANY_KEY, &FONT_OTHER_TEXT, flashOnOff);
+    // 闪烁文字 按任意键继续...
+    showStringCenter(190, STR_PRESS_ANY_KEY, &FONTHZ32, flashOnOff);
 }
-
-// ##### 游戏介绍页
-void DISP_drawInfo(){
-    clearScreen();
-    devShowString(20, 30, "This is a port of the embMine(https://gitee.com/slipperstree/embMine) that runs on the Nintendo Game & Watch: Super Mario Bros / Zelda. game. You can find more information from following GitHub page.", &FONT_ASC16, COLOR_BG, COLOR_FO);
-    showStringCenterColor(160, "https://github.com/slipperstree/", &FONT_BOTTOM_INFO, COLOR_BG, COLOR_WINLOGO_Y, 0);
-    showStringCenterColor(174, "game-and-watch-snake", &FONT_BOTTOM_INFO, COLOR_BG, COLOR_WINLOGO_Y, 0);
-
-    showStringCenter(SCREEN_H - FONT_BOTTOM_INFO.fontHeight - 2, STR_GAMEOVER_INFO_EXIT, &FONT_BOTTOM_INFO, 0);
-}
-
-// ##### 游戏介绍页 定期被调用
-void DISP_flashInfo(u8 flashOnOff){
-
-}   
 
 // 绘制框架
 void DISP_drawFrame() {
-    // 墙体厚度 = (屏幕宽 - 游戏区域宽(地图SIZE_Y*蛇Block字体高)) / 2
-    //FRAME_THICKNESS = (SCREEN_W - SNAKE_SIZE_X * BLOCK_VIEW_FONT.fontWidth) / 2;
+    u16 barTopY, barRightX;
 
-    // 游戏区域下方横栏位置Y = 屏幕高 - 底部边框高 - 底部信息栏高 - 下方横栏高(也是边框高)
-    // 游戏界面底部信息栏高度
-    barBottomY = SCREEN_H - FRAME_THICKNESS - FONT_BOTTOM_INFO.fontHeight - 2 - FRAME_THICKNESS;
+    // 边框厚度
+    frameThickness = 5;
 
-    // 游戏区域上方横栏位置Y = 游戏区域下方横栏位置Y - 游戏区域高(地图SIZE_Y*蛇Block字体高) - 上方横栏高(也是边框高)
-    barTopY = barBottomY - (SNAKE_SIZE_Y * BLOCK_VIEW_FONT.fontHeight) - FRAME_THICKNESS;
-
-    // 游戏区域上方信息位置Y
-    topInfoY = (barTopY - FRAME_THICKNESS - FONT_TOP_INFO.fontHeight) / 2;
-
-    topFoodIconY = (barTopY - FRAME_THICKNESS - BLOCK_VIEW_FONT.fontHeight) / 2;
+    // 游戏区域右方竖栏位置Y = 屏幕宽 - 右方边框高 - 右方信息栏高 - 右方竖栏高(也是边框厚度) 
+    // 加1的目的是为了留出右侧的一像素的空间用来绘制选中状态的外框
+    barRightX = SCREEN_W - frameThickness - FRAME_RIGHT_INFO_WIDTH - frameThickness + 1;
 
     // 开始绘制(实心矩形拼接)
-    devFillRectange(0, 0, SCREEN_W, FRAME_THICKNESS, COLOR_FRAME);                           // 顶
-    devFillRectange(0, 0, FRAME_THICKNESS, SCREEN_H, COLOR_FRAME);                           // 左
-    devFillRectange(SCREEN_W - FRAME_THICKNESS, 0, FRAME_THICKNESS, SCREEN_H, COLOR_FRAME);   // 右
-    devFillRectange(0, barTopY, SCREEN_W, FRAME_THICKNESS, COLOR_FRAME);                     // 上横栏
-    devFillRectange(0, barBottomY, SCREEN_W, FRAME_THICKNESS, COLOR_FRAME);                  // 下横栏
-    devFillRectange(0, SCREEN_H - FRAME_THICKNESS, SCREEN_W, FRAME_THICKNESS, COLOR_FRAME);   // 底
+    devFillRectange(0, 0, SCREEN_W, frameThickness, COLOR_FRAME);                           // 顶
+    devFillRectange(0, 0, frameThickness, SCREEN_H, COLOR_FRAME);                           // 左
+    devFillRectange(SCREEN_W - frameThickness, 0, frameThickness, SCREEN_H, COLOR_FRAME);   // 右
+    devFillRectange(barRightX, 0, frameThickness, SCREEN_H, COLOR_FRAME);                   // 右竖栏
+    devFillRectange(SCREEN_W - frameThickness - FRAME_RIGHT_INFO_WIDTH, MENU_LOCK_Y - 35, FRAME_RIGHT_INFO_WIDTH, 30, COLOR_FRAME);    // 右横栏
+    devFillRectange(0, SCREEN_H - frameThickness+1, SCREEN_W, frameThickness-1, COLOR_FRAME);   // 底
+
+    // 最后绘制雷区 最右侧 和 最底部 缺少的一个像素宽的边框线
+    devDrawLine(frameThickness, SCREEN_H-frameThickness, barRightX - 1, SCREEN_H-frameThickness, 1, COLOR_MINE_BLOCK_LINE);
+    devDrawLine(barRightX - 1, frameThickness, barRightX - 1, SCREEN_H-frameThickness, 1, COLOR_MINE_BLOCK_LINE);
 
     // 游戏区域Y偏移
-    gameArea_Y_offset = barTopY + FRAME_THICKNESS + GAME_AREA_Y_OFFSET;
-    gameArea_X_offset = FRAME_THICKNESS + GAME_AREA_X_OFFSET;
+    GAME_AREA_Y_OFFSET = frameThickness;
+    GAME_AREA_X_OFFSET = frameThickness;
+}
+
+// 绘制光标
+void drawCusor(u8 x, u8 y, u16 color){
+    u16 x1,y1,x2,y2;
+    #define CUSOR_LEN 9
+
+    x1 = x*BLOCK_VIEW_FONT.fontWidth + GAME_AREA_X_OFFSET;
+    y1 = y*BLOCK_VIEW_FONT.fontHeight + GAME_AREA_Y_OFFSET;
+    x2 = x1+BLOCK_VIEW_FONT.fontWidth;
+    y2 = y1+BLOCK_VIEW_FONT.fontHeight;
+    devDrawLine(x1, y1, x1+CUSOR_LEN, y1, 1, color);
+    devDrawLine(x1, y1, x1, y1+CUSOR_LEN, 1, color);
+    
+    devDrawLine(x1, y2, x1+CUSOR_LEN, y2, 1, color);
+    devDrawLine(x1, y2, x1, y2-CUSOR_LEN, 1, color);
+
+    devDrawLine(x2, y1, x2-CUSOR_LEN, y1, 1, color);
+    devDrawLine(x2, y1, x2, y1+CUSOR_LEN, 1, color);
+    
+    devDrawLine(x2, y2, x2-CUSOR_LEN, y2, 1, color);
+    devDrawLine(x2, y2, x2, y2-CUSOR_LEN, 1, color);
+}
+
+// 隐藏光标
+void DISP_hideCusor(u8 x, u8 y){
+    drawCusor(x, y, COLOR_MINE_BLOCK_LINE);
+}
+
+// 显示光标     
+void DISP_showCusor(u8 x, u8 y){
+    drawCusor(x, y, COLOR_RED);
 }
 
 // 声音和静音状态
 void DISP_drawSound(u8 soundOnOff) {
     if (soundOnOff)
     {
-        //showStringCenter(SCREEN_H - FONT_BOTTOM_INFO.fontHeight - FRAME_THICKNESS - 1, STR_DEMO_MENU, &FONT_BOTTOM_INFO, 0);
-        
+        showString(MENU_X, MENU_FLAG_Y, STR_GAME_MENU2, &FONTHZ32, COLOR_BG, COLOR_FO);
     } else {
-        // 绘制静音        
-        //devDrawLine(SCREEN_W/2-13, SCREEN_H-34, SCREEN_W/2-17+54, SCREEN_H-7, 3, COLOR_RED);
-        //devDrawLine(SCREEN_W/2-13, SCREEN_H-7,  SCREEN_W/2-17+54, SCREEN_H-34, 3, COLOR_RED);
+        // 绘制静音
+        devDrawLine(MENU_X+27, MENU_FLAG_Y+2, MENU_X+51, MENU_FLAG_Y+28, 3, COLOR_RED);
     }
     
+}
+
+void DISP_drawLock() {
+    showString(MENU_X, MENU_LOCK_Y, STR_GAME_MENU1_LOCK, &FONTHZ32, COLOR_BG, COLOR_RED);
+}
+
+void DISP_drawUnLock() {
+    showString(MENU_X, MENU_LOCK_Y, STR_GAME_MENU1_UNLOCK, &FONTHZ32, COLOR_BG, COLOR_FO);
 }
 
 // 初始化
@@ -803,7 +935,7 @@ void DISP_init(void){
     // clockH = clock >> 16;
     // clockL = clock & 0xFFFF;
     // sprintf(buff, "H:%u  L:%u", clockH, clockL);
-    // devShowString(0,0,buff,&FONT_OTHER_TEXT,COLOR_BLACK, COLOR_WHITE);
+    // showString(0,0,buff,&FONTHZ32,COLOR_BLACK, COLOR_WHITE);
     // while (1);
     
 }

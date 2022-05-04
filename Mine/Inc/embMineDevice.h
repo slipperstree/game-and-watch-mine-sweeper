@@ -73,37 +73,26 @@
     // 屏幕分辨率
     #define SCREEN_W  320
     #define SCREEN_H  240
-    // #define SCREEN_W  240
-    // #define SCREEN_H  160
 
     // 元素颜色设置
     // 默认背景/前景（程序中可通过 DISP_setBackColor/DISP_setForeColor 随时修改）
     #define COLOR_DEFAULT_BACK      COLOR_BLACK
-    #define COLOR_DEFAULT_FRONT     COLOR_SKYLT
+    #define COLOR_DEFAULT_FRONT     COLOR_GRAYLT //COLOR_SKYLT
     // 开始页大标题
     #define COLOR_TITLE1            COLOR_SKYLT
     #define COLOR_TITLE2            COLOR_GREENLT
-    // 蛇/食物
-    #define COLOR_DEFAULT_SNAKE     0xa50c
-    #define COLOR_DEFAULT_APPLE     COLOR_YELLOW
+
+    #define COLOR_DEFAULT_MAP_LINE  COLOR_MINE_BLOCK_LINE
+    
     // 游戏界面框架颜色
     #define COLOR_DEFAULT_FRAME     COLOR_DEFAULT_FRONT
 
     // 使用哪套位图字体绘制食物/蛇/障碍物等(在font.h / font.c中定义)
-    #define BLOCK_VIEW_FONT FONT_IMG_SNAKE12
-
-    // 框架厚度
-    #define FRAME_THICKNESS 1
-
-    // 游戏区域左上角坐标偏移
-    #define GAME_AREA_X_OFFSET 2
-    #define GAME_AREA_Y_OFFSET 0
+    #define BLOCK_VIEW_FONT FONT_IMG_2BIT_BLOCK_BG23
 
     // 界面语言
     #define UI_LANG_EN
     // #define UI_LANG_CN
-
-
 
 // *******************************************************************************************************
 // * 接口定义，不用修改
@@ -131,6 +120,9 @@ void devScreenOFF();
 // 打开屏幕显示(跟函数devScreenOFF搭配使用，如无必要可不用实现留空即可，实现了更好，可以防止刷新画面的过程被用户看见)
 void devScreenON();
 
+// 更新当前光标位置（主循环会不停调用这个接口以刷新全局变量g_devCurPosX g_devCurPosY的数值用来绘制画面上的光标）
+void devUpdateCurPos();
+
 // 进入主画面时会调用这个函数，如有需要请实现想要的效果(比如关闭LED)
 void devEnterHomePage();
 // 进入Demo画面时会调用这个函数，如有需要请实现想要的效果
@@ -140,13 +132,11 @@ void devEnterGamePage();
 // 进入GameOver画面时会调用这个函数，如有需要请实现想要的效果
 void devEnterGameOverPage();
 
-// 当玩家改变游戏速度时会调用这个函数
-void devSpeedChanged(u16 speed);
 // 播放声音
 typedef enum
 {
-    SOUND_EAT_APPLE = 0 ,
-    SOUND_MOVE = 1 ,
+    SOUND_CLICK = 0 ,
+    SOUND_FLAG = 1 ,
     SOUND_DEAD = 2 ,
     SOUND_HISCORE = 3 ,
     SOUND_MENU = 4, 
@@ -160,13 +150,13 @@ void devSndBeepShort();
 // 设置保存/读取
 typedef struct
 {
-    u16  hiScore;
-    u8 soundOnOff;
-    u16  colorBackGround;
-    u16  colorFront;
-    u16  colorSnake;
-    u16  colorApple;
-    u16  colorFrame;
+    unsigned int  hiScoreLvl1;
+    unsigned int  hiScoreLvl2;
+    unsigned int  hiScoreLvl3;
+    unsigned char soundOnOff;
+    unsigned int  colorBackGround;
+    unsigned int  colorFront;
+    unsigned int  colorFrame;
 } SaveData_Struct;
 void devLoadSetting(SaveData_Struct *setting);
 void devSaveSetting(SaveData_Struct *setting);
