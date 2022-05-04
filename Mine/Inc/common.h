@@ -40,10 +40,9 @@ u16 My_real_rand();
     // （2）h十六位
     // （3）l三十二位
     // 比如打印uchar的数字，应该写成 printf("%bd", a), 而不是 printf("%d", a)，否则会将前8位的内存一起打印出来
-    #define LOG   printf                //输出log用的宏定义，具体函数需要自行实现，比如串口打印函数或者printf重定向
+    #define LOG(str)   UART1_Isr_Send_String(str)     //输出log用的宏定义，具体函数需要自行实现，比如串口打印函数或者printf重定向
 #else
-    // 这一行不要修改，不输出的时候也要保留空的宏定义，不然编译会报错
-    #define LOG   /##/
+    #define LOG(str)   // 这一行不要修改，不输出的时候也要保留空的宏定义，不然编译会报错
 #endif
 
 
