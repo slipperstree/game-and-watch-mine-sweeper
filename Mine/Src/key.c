@@ -9,7 +9,7 @@
 // ******* 根据需要修改头文件定义，key.h 和 common.h 是必须的
 // ******* 一般需要将MCU寄存器头文件包含在common.h里面以便定义后面的按键IO宏
 #include "key.h"
-#include "embSnakeDevice.h"
+#include "embMineDevice.h"
 #include "common.h"
 
 // *******************************************************************************************************

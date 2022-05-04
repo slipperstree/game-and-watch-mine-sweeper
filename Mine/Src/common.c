@@ -38,7 +38,7 @@ u16 My_real_rand(){
 	return (u16)my_rand();
 }
 
-u16 extRealRand4EmbSnake(){
+u16 extRealRand4embMine(){
 
 	return (u16)my_rand();
 }

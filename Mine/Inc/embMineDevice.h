@@ -1,5 +1,5 @@
 /**************************************************
- * File  : embSnakeDevice.h
+ * File  : embMineDevice.h
  * Author: MANDA (slipperstree@gmail.com)
  * Date  : 2019.11
  * Updt  : 2021.07

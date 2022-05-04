@@ -1,12 +1,12 @@
 /**************************************************
- * File  : embSnakeDevice.c
+ * File  : embMineDevice.c
  * Author: MANDA (slipperstree@gmail.com)
  * Date  : 2019.11
  * Updt  : 2021.07
  * Func  : 设备驱动模块，请自行实现本文件内的各函数以适配你的设备，外部会在需要的时候调用这些函数
 ***************************************************/
 
-#include "embSnakeDevice.h"
+#include "embMineDevice.h"
 #include "boradSupport.h"
 #include "gw_draw.h"
 

@@ -7,12 +7,12 @@
 ***************************************************/
 
 #include "common.h"
-#include "embSnake.h"
+#include "embMine.h"
 #include "control.h"
 #include "display.h"
 #include "key.h"
 #include "saveData.h"
-#include "embSnakeDevice.h"
+#include "embMineDevice.h"
 
 
 #if ISDEBUG

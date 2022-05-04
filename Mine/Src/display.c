@@ -1,9 +1,9 @@
 #include "common.h"
 #include "string.h"
 #include "display.h"
-#include "embSnake.h"
+#include "embMine.h"
 #include "font.h"
-#include "embSnakeDevice.h"
+#include "embMineDevice.h"
 
 // define start ------------------------------------------------------------------------------------------
 
@@ -734,7 +734,7 @@ void DISP_flashGameOver(u8 flashOnOff, u8 isNewRecord){
 // ##### ”Œœ∑ΩÈ…‹“≥
 void DISP_drawInfo(){
     clearScreen();
-    devShowString(20, 30, "This is a port of the EmbSnake(https://gitee.com/slipperstree/EmbSnake) that runs on the Nintendo Game & Watch: Super Mario Bros / Zelda. game. You can find more information from following GitHub page.", &FONT_ASC16, COLOR_BG, COLOR_FO);
+    devShowString(20, 30, "This is a port of the embMine(https://gitee.com/slipperstree/embMine) that runs on the Nintendo Game & Watch: Super Mario Bros / Zelda. game. You can find more information from following GitHub page.", &FONT_ASC16, COLOR_BG, COLOR_FO);
     showStringCenterColor(160, "https://github.com/slipperstree/", &FONT_BOTTOM_INFO, COLOR_BG, COLOR_WINLOGO_Y, 0);
     showStringCenterColor(174, "game-and-watch-snake", &FONT_BOTTOM_INFO, COLOR_BG, COLOR_WINLOGO_Y, 0);
 

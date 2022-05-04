@@ -16,8 +16,8 @@
 #endif
 
 #ifdef USE_EXTERN_REAL_RAND_FUNC
-extern u16 extRealRand4EmbSnake();
-#define RAND_FUNC extRealRand4EmbSnake
+extern u16 extRealRand4embMine();
+#define RAND_FUNC extRealRand4embMine
 #endif
 
 // 临时变量用(sprintf等)

@@ -3,7 +3,7 @@
 
 #include "common.h"
 #include "color.h"
-#include "embSnakeDevice.h"
+#include "embMineDevice.h"
 
 // --- 以下不要修改 ------------------------------------------------------------------------------------------------------------
 #define DISP_YES 1

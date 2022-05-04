@@ -11,7 +11,7 @@
 			"flash.h": "c",
 			"buttons.h": "c",
 			"mymathutil.h": "c",
-			"embsnakedevice.h": "c",
+			"embMinedevice.h": "c",
 			"binary.h": "c",
 			"def_types.h": "c",
 			"gw_draw.h": "c"

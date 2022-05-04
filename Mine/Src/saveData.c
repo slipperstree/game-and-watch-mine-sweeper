@@ -1,6 +1,6 @@
 #include "common.h"
 #include "saveData.h"
-#include "embSnakeDevice.h"
+#include "embMineDevice.h"
 
 // 临时变量用(sprintf等)
 extern u8 buff[128];

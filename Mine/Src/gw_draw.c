@@ -1,5 +1,5 @@
 #include "def_types.h"
-#include "embSnakeDevice.h"
+#include "embMineDevice.h"
 #include "gw_draw.h"
 
 extern uint16_t framebuffer[320 * 240];
