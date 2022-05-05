@@ -10,7 +10,9 @@ Build and flash by `make flash` in `game-and-watch-mine-sweeper` directory
 Import this project into your STM32CubeIDE workspace by `Import -> General -> Existing Projects into Workspace` and build / debug it.
 
 ## 3. Just need the game rom
-You can just download [pre builded ELF file](./Release/gw_mine_sweeper.elf) for test.
+You can just download Pre builded elf file for test.
+- [ROM .elf](./Release/ROM/gw_mine_sweeper.elf)
+- [RAM .elf](./Release/RAM/gw_mine_sweeper.elf)
 
 ## Controls
 - Select a level at home page and press A to start game.
