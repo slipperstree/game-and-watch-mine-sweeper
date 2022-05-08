@@ -1,4 +1,4 @@
-# Mine game for Nintendo Game &amp; Watch
+# Minesweeper game for Nintendo Game &amp; Watch
 This is a mine-sweeper game runs on the Nintendo Game &amp; Watch: Super Mario Bros / Zelda system.
 
 ## Before build
